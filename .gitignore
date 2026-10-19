@@ -1,0 +1,7 @@
+secrets/*
+!secrets/config.example.json
+build/
+kiosk/build/
+node_modules/
+homeassistant/backup/
+.claude/

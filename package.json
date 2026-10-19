@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "name": "frameo-homeassistant-dashboard",
+  "scripts": {
+    "test": "TZ=Europe/Amsterdam node --test test/*.test.js test/*.test.mjs"
+  }
+}

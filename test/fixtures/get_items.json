@@ -1,0 +1,19 @@
+{
+ "id": 5,
+ "type": "result",
+ "success": true,
+ "result": {
+  "context": { "id": "x", "parent_id": null, "user_id": "x" },
+  "response": {
+   "todo.frame": {
+    "items": [
+     { "summary": "Buy milk", "uid": "u1", "status": "needs_action" },
+     { "summary": "Call the plumber", "uid": "u2", "status": "needs_action", "due": "2026-10-14 18:00:00" },
+     { "summary": "Old thing", "uid": "u3", "status": "completed" },
+     { "summary": "Renew passport", "uid": "u4", "status": "needs_action", "due": "2026-10-20" },
+     { "summary": "Pay invoice", "uid": "u5", "status": "needs_action", "due": "2026-10-14T09:00:00+02:00" }
+    ]
+   }
+  }
+ }
+}

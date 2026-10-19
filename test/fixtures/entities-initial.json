@@ -1,0 +1,50 @@
+{
+ "id": 1,
+ "type": "event",
+ "event": {
+  "a": {
+   "sun.sun": {
+    "s": "above_horizon",
+    "a": {
+     "next_dawn": "2026-10-15T05:30:58.524448+00:00",
+     "next_dusk": "2026-10-14T17:23:08.383416+00:00",
+     "next_midnight": "2026-10-14T23:26:28+00:00",
+     "next_noon": "2026-10-15T11:26:34+00:00",
+     "next_rising": "2026-10-15T06:05:57.281736+00:00",
+     "next_setting": "2026-10-14T16:48:18.292189+00:00",
+     "elevation": 26.09,
+     "azimuth": 206.65,
+     "rising": false,
+     "friendly_name": "Sun"
+    },
+    "c": "01M4X8476ZC2Q64B8EPHCCN7ED",
+    "lc": 1791957797.060691,
+    "lu": 1791982968.0311444
+   },
+   "weather.buienradar": {
+    "s": "cloudy",
+    "a": {
+     "temperature": 17.5,
+     "apparent_temperature": 17.5,
+     "temperature_unit": "\u00b0C",
+     "humidity": 59,
+     "pressure": 1029.1,
+     "pressure_unit": "hPa",
+     "wind_bearing": 220,
+     "wind_gust_speed": 25.56,
+     "wind_speed": 16.92,
+     "wind_speed_unit": "km/h",
+     "visibility": 91.6,
+     "visibility_unit": "km",
+     "precipitation_unit": "mm",
+     "attribution": "Data provided by buienradar.nl",
+     "friendly_name": "Buienradar",
+     "supported_features": 1
+    },
+    "c": "01M4X7D68KHSHQ5KZA0TBMPSTJ",
+    "lc": 1791977411.992357,
+    "lu": 1791982213.3950717
+   }
+  }
+ }
+}

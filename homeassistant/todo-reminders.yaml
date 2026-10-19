@@ -1,0 +1,49 @@
+# Push a mobile notification when a to-do item's due time arrives.
+# Add via Settings > Automations > Create > Edit in YAML, or include it from your automations.yaml.
+# Edit `todo.frame` (the list the frame uses) and the notify targets (Developer tools > Actions, search "notify.mobile_app").
+# Only items with a due time fire; date-only items are skipped. Runs once a minute, so a reminder fires
+# in the minute its time falls in (it is missed if HA is down for that minute).
+alias: To-do reminders
+description: Push when a to-do on the frame comes due
+mode: queued
+triggers:
+  - trigger: time_pattern
+    minutes: "*"
+    seconds: 0
+actions:
+  - action: todo.get_items
+    target:
+      entity_id: todo.frame
+    data:
+      status: needs_action
+    response_variable: list
+  - variables:
+      due_now: >
+        {% set n = now() %}
+        {% set out = namespace(items=[]) %}
+        {% for i in list['todo.frame']['items'] if i.due is defined and i.due | string | length > 10 %}
+          {% set secs = (n - (as_datetime(i.due) | as_local)).total_seconds() %}
+          {% if 0 <= secs < 60 %}{% set out.items = out.items + [i.summary] %}{% endif %}
+        {% endfor %}
+        {{ out.items }}
+  - repeat:
+      for_each: "{{ due_now }}"
+      sequence:
+        - action: notify.mobile_app_phone_one
+          data:
+            title: To do
+            message: "{{ repeat.item }}"
+            data:
+              tag: "todo-{{ repeat.item }}"
+              push:
+                interruption-level: time-sensitive
+              channel: Reminders
+              importance: high
+        - action: notify.mobile_app_phone_two
+          data:
+            title: To do
+            message: "{{ repeat.item }}"
+            data:
+              tag: "todo-{{ repeat.item }}"
+              channel: Reminders
+              importance: high

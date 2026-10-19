@@ -1,0 +1,68 @@
+{
+ "id": 3,
+ "type": "result",
+ "success": true,
+ "result": {
+  "context": {
+   "id": "x",
+   "parent_id": null,
+   "user_id": "x"
+  },
+  "response": {
+   "weather.buienradar": {
+    "forecast": [
+     {
+      "datetime": "2026-10-14T00:00:00+02:00",
+      "condition": "partlycloudy",
+      "precipitation_probability": 0,
+      "wind_bearing": 225,
+      "temperature": 17.0,
+      "templow": 10.0,
+      "wind_speed": 0.9,
+      "precipitation": 0.0
+     },
+     {
+      "datetime": "2026-10-15T00:00:00+02:00",
+      "condition": "cloudy",
+      "precipitation_probability": 20,
+      "wind_bearing": 180,
+      "temperature": 19.0,
+      "templow": 10.0,
+      "wind_speed": 0.9,
+      "precipitation": 0.0
+     },
+     {
+      "datetime": "2026-10-16T00:00:00+02:00",
+      "condition": "pouring",
+      "precipitation_probability": 80,
+      "wind_bearing": 225,
+      "temperature": 19.0,
+      "templow": 12.0,
+      "wind_speed": 0.9,
+      "precipitation": 0.0
+     },
+     {
+      "datetime": "2026-10-17T00:00:00+02:00",
+      "condition": "rainy",
+      "precipitation_probability": 50,
+      "wind_bearing": 0,
+      "temperature": 15.0,
+      "templow": 9.0,
+      "wind_speed": 0.9,
+      "precipitation": 0.0
+     },
+     {
+      "datetime": "2026-10-18T00:00:00+02:00",
+      "condition": "partlycloudy",
+      "precipitation_probability": 30,
+      "wind_bearing": 45,
+      "temperature": 14.0,
+      "templow": 6.0,
+      "wind_speed": 0.9,
+      "precipitation": 0.0
+     }
+    ]
+   }
+  }
+ }
+}

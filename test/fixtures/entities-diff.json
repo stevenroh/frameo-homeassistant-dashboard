@@ -1,0 +1,18 @@
+{
+ "type": "event",
+ "event": {
+  "c": {
+   "sun.sun": {
+    "+": {
+     "lu": 1791983208.0324883,
+     "c": "01M4X8BHK0H1H3RWWSMRHFNTN0",
+     "a": {
+      "elevation": 25.81,
+      "azimuth": 207.71
+     }
+    }
+   }
+  }
+ },
+ "id": 1
+}

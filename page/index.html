@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="en" class="day">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280, height=800, user-scalable=no">
+<title>Frame</title>
+<style>
+  /* Soft pastel cards on a landscape: day (sage hills, sun) and night (sunset to sunrise: moon, stars, dark hills).
+     Fixed 1280x800, system Roboto. Flat colours, no shadows, ripples or animations: the frame is a 1 GHz Cortex-A7.
+     The M3 token names are kept; html.day / html.night swap their values. */
+  html.day {
+    --bg: #dce9e2; --hill1: #c3dccc; --hill2: #aacdb8; --orb: #ffd9a8;
+    --primary: #d9603f; --on-primary: #ffffff; --primary-container: #ffd6bf; --on-primary-container: #4a1d05;
+    --secondary-container: #e6dcff; --on-secondary-container: #24124a; --violet: #5b3f9a;
+    --surface: #fbf6ef; --surface-container-low: #fffaf4; --surface-container: #faf3ea;
+    --surface-container-high: #f3ebe1; --surface-container-highest: #ece2d6;
+    --on-surface: #2b2420; --on-surface-variant: #6b5e52; --outline: #a89888; --outline-variant: #f0e4d6;
+    --peach: #ffe8dc; --btn: #ffc4ae; --on-btn: #4a1d05; --mint: #c9ecd4; --on-mint: #0f2e1a; --mint-ink: #2f6b40;
+    --sky: #cfe2ff; --on-sky: #0e2547; --sky-ink: #2c5aa0; --disabled: #b9ab9c; --error: #b3261e;
+    --pressed: #f0e4d6; --ct-thumb: #2b2420;
+  }
+  html.night {
+    --bg: #0b1120; --hill1: #16223a; --hill2: #1a2b2e; --orb: #d9d1b6;
+    --primary: #ffc4ae; --on-primary: #4a1d05; --primary-container: #ffd6bf; --on-primary-container: #4a1d05;
+    --secondary-container: #e6dcff; --on-secondary-container: #24124a; --violet: #e6dcff;
+    --surface: #17130b; --surface-container-low: #26231f; --surface-container: #2e2a24;
+    --surface-container-high: #34302a; --surface-container-highest: #3f3a32;
+    --on-surface: #f1e9df; --on-surface-variant: #b5a898; --outline: #7d7366; --outline-variant: #3a342d;
+    --peach: #3a2c27; --btn: #ffc4ae; --on-btn: #4a1d05; --mint: #c9ecd4; --on-mint: #0f2e1a; --mint-ink: #7fcf97;
+    --sky: #cfe2ff; --on-sky: #0e2547; --sky-ink: #2c5aa0; --disabled: #6b6257; --error: #ffb4ab;
+    --pressed: #3f3a32; --ct-thumb: #f1e9df;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 800px; overflow: hidden; background: var(--bg); color: var(--on-surface);
+    font-family: Roboto, sans-serif; font-variant-numeric: tabular-nums;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  html.night { background: linear-gradient(180deg, #0b1120 0%, #141d36 60%, #1b2540 100%); }
+  button { font: inherit; color: inherit; border: 0; background: none; text-align: left; }
+  .muted { font-size: 16px; color: var(--on-surface-variant); padding-top: 14px; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 5px; flex-shrink: 0; }
+  .title-m { font-size: 16px; font-weight: 500; letter-spacing: 0.15px; color: var(--on-surface-variant); }
+  .card-bg { background: var(--surface-container-low); }
+
+  /* landscape */
+  #bg { position: absolute; left: 0; top: 0; width: 1280px; height: 800px; overflow: hidden; }
+  #bg span { position: absolute; display: block; }
+  #hill1 { left: -120px; top: 420px; width: 1100px; height: 520px; border-radius: 50%; background: var(--hill1); }
+  #hill2 { left: 160px; top: 520px; width: 760px; height: 420px; border-radius: 50%; background: var(--hill2); }
+  #orb { left: 420px; top: 90px; width: 300px; height: 300px; border-radius: 150px; background: var(--orb); }
+  .moon, .star { display: none; }
+  html.night #orb { left: 440px; top: 110px; width: 260px; height: 260px; border-radius: 130px; }
+  html.night .moon { display: block; background: #c8bfa0; border-radius: 50%; }
+  html.night #halo { display: block; left: 400px; top: 70px; width: 340px; height: 340px; border-radius: 170px; background: #1a2442; }
+  #halo { display: none; }
+  html.night .star { display: block; background: #c9d3ea; border-radius: 2px; }
+
+  /* buttons and chips */
+  .tonal { display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 22px; border-radius: 24px;
+    background: var(--secondary-container); color: var(--on-secondary-container); font-size: 16px; font-weight: 600; letter-spacing: 0.1px; }
+  .tonal:active { background: var(--btn); }
+  .tonal:disabled { background: var(--surface-container-high); color: var(--disabled); }
+  .outlined { height: 40px; padding: 0 18px; border-radius: 20px; border: 1px solid var(--outline); font-size: 15px; font-weight: 500; }
+  .outlined:active { background: var(--pressed); }
+  .icon-btn { width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: var(--on-surface); }
+  .icon-btn:active { background: var(--pressed); }
+  .segs { display: flex; padding: 4px; border-radius: 24px; background: var(--surface-container-high); gap: 2px; }
+  .seg { display: flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 18px; border-radius: 20px;
+    font-size: 15px; font-weight: 500; letter-spacing: 0.1px; color: var(--on-surface-variant); }
+  .seg.on { background: var(--secondary-container); color: var(--on-secondary-container); font-weight: 600; }
+  .seg .chk { display: none; }
+  .seg.on .chk { display: inline-flex; }
+  .seg:disabled { color: var(--disabled); }
+  .chip { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 17px;
+    background: var(--surface-container-high); font-size: 14px; font-weight: 500; letter-spacing: 0.1px; color: var(--on-surface); }
+
+  #app { position: absolute; left: 0; top: 0; width: 1280px; height: 800px; }
+
+  /* floating navigation rail */
+  #rail { position: absolute; left: 20px; top: 50%; margin-top: -228px; width: 64px; padding: 8px 0; border-radius: 32px;
+    background: var(--surface-container-low); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2; }
+  .rail-btn { width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: var(--on-surface-variant); }
+  .rail-btn.on { background: var(--secondary-container); color: var(--on-secondary-container); }
+  .view { position: absolute; left: 108px; top: 0; right: 0; bottom: 0; }
+
+  /* home */
+  #clockcard { position: absolute; left: 0; top: 24px; padding: 16px 28px 18px; border-radius: 32px; background: var(--surface-container-low); }
+  #clock { font-size: 112px; line-height: 0.95; font-weight: 300; letter-spacing: -4px; color: var(--primary); }
+  #datebar { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
+  #date { font-size: 18px; }
+  #wchip { height: 40px; padding: 0 10px 0 10px; border-radius: 20px; background: var(--sky); color: var(--on-sky);
+    display: inline-flex; align-items: center; gap: 6px; font-size: 16px; }
+  #wchip svg { flex-shrink: 0; }
+  #wchip-icon { display: inline-flex; color: var(--sky-ink); }
+
+  #right { position: absolute; right: 0; top: 0; bottom: 0; width: 380px; border-radius: 28px 0 0 28px;
+    background: var(--surface-container-low); padding: 24px 24px 20px 28px; display: flex; flex-direction: column; }
+  #right-head { display: flex; align-items: center; justify-content: space-between; }
+  #right-head .title-m { font-size: 30px; color: var(--on-surface); font-weight: 500; letter-spacing: 0; }
+  #open-cal { height: 40px; padding: 0 14px 0 18px; font-size: 14px; }
+  #agenda { flex: 0 1 auto; min-height: 60px; max-height: 250px; overflow-y: auto; }
+  .a-ev { display: flex; align-items: center; gap: 14px; min-height: 58px; border-bottom: 1px solid var(--outline-variant); }
+  .a-bar { width: 4px; height: 34px; border-radius: 2px; background: #ffb59c; flex-shrink: 0; }
+  .a-body { min-width: 0; display: flex; flex-direction: column; }
+  .a-t { font-size: 13px; color: var(--on-surface-variant); }
+  .a-title { font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #bins { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+  .bchip { height: 36px; padding: 0 12px; border-radius: 18px; background: var(--surface-container-high); font-size: 14px;
+    display: inline-flex; align-items: center; gap: 6px; }
+  .bchip.now { color: #10140f; font-weight: 700; }   /* background: the bin colour, set inline */
+  #todo-box { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-top: 18px; }
+  #todo-head { display: flex; align-items: center; justify-content: space-between; }
+  #todo-head .title-m { font-size: 22px; color: var(--on-surface); font-weight: 500; letter-spacing: 0; }
+  #todo-count { font-size: 14px; color: var(--on-surface-variant); }
+  #todo-list { flex: 1; min-height: 0; overflow-y: auto; margin-top: 2px; }
+  .todo { display: flex; align-items: center; gap: 12px; min-height: 48px; }
+  .todo-box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--outline); flex-shrink: 0; }
+  .todo:active .todo-box { background: var(--mint-ink); border-color: var(--mint-ink); }
+  .todo-title { flex: 1; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .todo-due { font-size: 14px; color: var(--on-surface-variant); flex-shrink: 0; }
+  .todo-due.overdue { color: var(--error); }
+  #todo-add { position: absolute; right: 404px; bottom: 24px; height: 72px; padding: 0 24px 0 20px; border-radius: 22px;
+    background: var(--btn); color: var(--on-btn); font-size: 17px; font-weight: 600; gap: 10px; }
+  #todo-add:active { background: var(--primary-container); }
+  /* music card: bottom left, clear of the Add to-do button (x 590-768) */
+  #mc-box { position: absolute; left: 0; bottom: 24px; width: 548px; padding: 16px 20px 16px 16px; border-radius: 32px;
+    background: var(--surface-container-low); }
+  #mc-open { display: flex; align-items: center; gap: 16px; width: 100%; }
+  #mc-art { width: 72px; height: 72px; border-radius: 18px; overflow: hidden; flex-shrink: 0; background: var(--secondary-container); color: #5b3f9a;
+    display: flex; align-items: center; justify-content: center; }
+  #mc-art img { width: 72px; height: 72px; display: block; object-fit: cover; }
+  #mc-art svg { width: 36px; height: 36px; }
+  #mc-meta { display: flex; flex-direction: column; min-width: 0; }
+  #mc-title { font-size: 22px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #mc-artist, #mc-on { font-size: 15px; color: var(--on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #mc-on { color: var(--violet); }
+  #mc-ctl { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  #mc-ctl .spacer { flex: 1; }
+  #mc-vol { height: 56px; border-radius: 28px; background: var(--surface-container-high); padding: 0 4px; display: flex; align-items: center; }
+  #mc-vol-v { width: 48px; text-align: center; font-size: 16px; font-weight: 500; }
+  #mc-ctl .mu-btn { width: 56px; height: 56px; border-radius: 28px; }
+  #mc-ctl #mc-play { width: 80px; background: var(--violet); color: #ffffff; }
+  html.night #mc-ctl #mc-play { color: #24124a; }
+  #set-sheet, #todo-sheet { position: absolute; left: 320px; top: 0; width: 640px; padding: 24px 32px 28px; border-radius: 0 0 28px 28px;
+    background: var(--surface-container-low); }
+  #set-sheet { z-index: 4; }
+  #set-ver { font-size: 16px; color: var(--on-surface-variant); margin-top: 6px; }
+  #set-url { display: block; width: 100%; height: 56px; margin-top: 12px; padding: 0 16px; border-radius: 16px; border: 1px solid var(--outline);
+    background: var(--surface-container); color: var(--on-surface); font: inherit; font-size: 18px; -webkit-user-select: text; user-select: text; }
+  #set-url:focus { outline: 2px solid var(--primary); outline-offset: -2px; border-color: var(--primary); }
+  #todo-input { display: block; width: 100%; height: 56px; margin-top: 16px; padding: 0 16px; border-radius: 16px; border: 1px solid var(--outline);
+    background: var(--surface-container); color: var(--on-surface); font: inherit; font-size: 20px; -webkit-user-select: text; user-select: text; }
+  #todo-input:focus { outline: 2px solid var(--primary); outline-offset: -2px; border-color: var(--primary); }
+  #todo-when { margin-top: 20px; }
+  #todo-when .seg { flex: 1; padding: 0 8px; }
+  #todo-sheet .sheet-foot { gap: 12px; }
+
+  /* forecast */
+  #fc-now { position: absolute; left: 0; top: 24px; width: 520px; height: 340px; border-radius: 32px; background: var(--surface-container-low);
+    padding: 24px 32px; display: flex; flex-direction: column; }
+  #fc-now-head { display: flex; align-items: center; justify-content: space-between; }
+  .big-title { font-size: 30px; font-weight: 500; }
+  .sub { font-size: 15px; color: var(--on-surface-variant); }
+  #fc-now-body { display: flex; align-items: center; gap: 24px; margin-top: 18px; }
+  #fc-blob { width: 150px; height: 150px; border-radius: 44% 56% 52% 48% / 50% 44% 56% 50%; background: var(--sky); color: var(--sky-ink);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  #fc-temp { font-size: 120px; font-weight: 300; line-height: 0.9; letter-spacing: -4px; color: var(--primary); }
+  #fc-cond { font-size: 26px; margin-top: 8px; }
+  #fc-today { font-size: 20px; color: var(--on-surface-variant); margin-top: auto; }
+  #fc-details { position: absolute; left: 536px; top: 24px; right: 24px; height: 340px; display: grid;
+    grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 12px; }
+  .det { border-radius: 28px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between; }
+  .det-l { font-size: 15px; font-weight: 600; }
+  .det-v { display: flex; align-items: baseline; gap: 6px; }
+  .det-n { font-size: 44px; line-height: 1; }
+  .det-u { font-size: 17px; }
+  .det-note { font-size: 15px; }
+  .det.peach { background: #ffd6bf; color: #4a1d05; } .det.peach .det-l, .det.peach .det-u, .det.peach .det-note { color: #8a4a2a; }
+  .det.mint { background: #c9ecd4; color: #0f2e1a; } .det.mint .det-l, .det.mint .det-u, .det.mint .det-note { color: #2f6b40; }
+  .det.sky { background: #cfe2ff; color: #0e2547; } .det.sky .det-l, .det.sky .det-u, .det.sky .det-note { color: #2c5aa0; }
+  .det.lav { background: #e6dcff; color: #24124a; } .det.lav .det-l, .det.lav .det-u, .det.lav .det-note { color: #5b3f9a; }
+  #fc-days { position: absolute; left: 0; top: 380px; right: 24px; bottom: 24px; border-radius: 32px; background: var(--surface-container-low);
+    padding: 20px 24px 22px; display: flex; flex-direction: column; }
+  #fc-days-head { display: flex; align-items: center; justify-content: space-between; }
+  #fc-days-head .big-title { font-size: 26px; }
+  #fc-list { flex: 1; min-height: 0; display: flex; gap: 12px; margin-top: 16px; }
+  .day { flex: 1; min-width: 0; border-radius: 24px; background: var(--surface-container); padding: 16px 18px; display: flex; flex-direction: column; }
+  .day.today { background: #fdf0c4; color: #2b2420; }
+  .day.today .sub, .day.today .day-lo { color: #6b5e52; }
+  .day.today .day-bar { background: #ece2d6; }
+  .day-head { display: flex; align-items: center; justify-content: space-between; }
+  .day-name { font-size: 24px; font-weight: 600; }
+  .day-mid { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .day-mid svg { flex-shrink: 0; }
+  .day-cond { font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .day-temps { display: flex; align-items: baseline; gap: 10px; margin-top: 14px; }
+  .day-hi { font-size: 40px; line-height: 1; }
+  .day-lo { font-size: 24px; color: var(--on-surface-variant); }
+  .day-bar { position: relative; height: 10px; border-radius: 5px; background: var(--surface-container-highest); margin-top: 10px; }
+  .day-bar i { position: absolute; top: 0; bottom: 0; border-radius: 5px; background: linear-gradient(90deg, #9cc3f0, #ffb08a); }
+  .day-foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+  .rainchip { height: 36px; padding: 0 12px; border-radius: 18px; background: #dde9fb; color: #0e2547; font-size: 16px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px; }
+  .rainchip.wet { background: #a9c9f5; }
+  .wind { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; color: var(--on-surface-variant); }
+  .day.today .wind { color: #6b5e52; }
+
+  /* calendar */
+  #cal-main { position: absolute; left: 0; top: 24px; bottom: 24px; right: 392px; width: auto; border-radius: 32px;
+    background: var(--surface-container-low); padding: 18px 20px; display: flex; flex-direction: column; }
+  #cal-head { display: flex; align-items: center; gap: 6px; }
+  #cal-title { font-size: 32px; font-weight: 500; flex: 1; padding-left: 6px; }
+  #cal-today { margin: 0 4px; }
+  #modes { margin-left: 10px; }
+  #dow { display: flex; gap: 4px; margin-top: 12px; }
+  #dow div { flex: 1; font-size: 14px; font-weight: 600; color: var(--on-surface-variant); text-align: center; }
+  #cal-grid { flex: 1; min-height: 0; margin-top: 8px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  #cal-grid.rows4 { grid-template-rows: repeat(4, minmax(0, 1fr)); }
+  #cal-grid.rows5 { grid-template-rows: repeat(5, minmax(0, 1fr)); }
+  #cal-grid.rows6 { grid-template-rows: repeat(6, minmax(0, 1fr)); }
+  .cell { display: flex; flex-direction: column; gap: 3px; padding: 6px 6px 4px; border-radius: 16px;
+    background: var(--surface-container); overflow: hidden; min-width: 0; }
+  .cell.out { opacity: 0.45; }
+  .cell.sel { outline: 2px solid var(--primary); outline-offset: -2px; }
+  .cell.tod { background: var(--peach); }
+  .cell-top { width: 100%; display: flex; align-items: center; justify-content: space-between; }
+  .num { width: 30px; height: 30px; border-radius: 15px; font-size: 16px; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+  .num.today { background: var(--primary); color: var(--on-primary); font-weight: 700; }
+  .cell-top .dot { margin-right: 4px; }
+  .evc { display: block; max-width: 100%; align-self: stretch; padding: 0 6px; border-radius: 8px; line-height: 20px;
+    background: var(--primary-container); color: #2b2420; font-size: 12px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .evc.c1 { background: #fde9a8; } .evc.c2 { background: #cfe2ff; } .evc.c3 { background: #c9ecd4; } .evc.c4 { background: #e6dcff; }
+  .more { font-size: 12px; font-weight: 500; color: var(--on-surface-variant); padding-left: 4px; }
+  #cal-side { position: absolute; right: 0; top: 0; bottom: 0; width: 392px; border-radius: 28px 0 0 28px; background: var(--surface-container-low);
+    padding: 28px 28px 24px 30px; display: flex; flex-direction: column; }
+  .side-label { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; color: var(--on-surface-variant); }
+  .side-label.today { color: var(--primary); }
+  #side-date { font-size: 34px; font-weight: 500; margin-top: 6px; }
+  #side-bin .chip { margin-top: 16px; height: 40px; background: var(--mint); color: var(--on-mint); font-size: 16px; font-weight: 700; padding: 0 16px; }
+  #side-events { flex: 1; overflow-y: auto; margin-top: 2px; }
+  .s-ev { display: flex; gap: 14px; margin-top: 14px; border-radius: 20px; background: var(--surface-container); padding: 14px 16px; }
+  .s-bar { width: 4px; border-radius: 2px; background: #ffb59c; flex-shrink: 0; }
+  .s-t { font-size: 14px; color: var(--on-surface-variant); }
+  .s-title { font-size: 22px; margin-top: 2px; }
+  #cal-grid.week { grid-template-rows: minmax(0, 1fr); gap: 8px; margin-top: 16px; }
+  .col { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-radius: 20px;
+    background: var(--surface-container); padding: 14px 8px 8px; }
+  .col.today { background: var(--peach); }
+  .col-head { display: flex; align-items: center; justify-content: space-between; padding: 0 6px; }
+  .col-dow { font-size: 14px; font-weight: 600; color: var(--on-surface-variant); }
+  .col-num { font-size: 28px; font-weight: 500; }
+  .col.today .col-dow, .col.today .col-num { color: var(--primary); }
+  .col-head .chip { height: 28px; padding: 0 8px; font-size: 12px; }
+  .col-head .dot { width: 8px; height: 8px; }
+  .col-evs { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .card { padding: 10px 12px; border-radius: 12px; background: var(--surface-container-low); }
+  .card-t { font-size: 13px; color: var(--on-surface-variant); }
+  .card-title { font-size: 16px; font-weight: 500; margin-top: 2px; line-height: 1.25; }
+
+  /* climate and lights */
+  .pill-head { position: absolute; left: 0; top: 24px; right: 24px; height: 64px; display: flex; align-items: center; gap: 12px; }
+  .pill { height: 64px; border-radius: 32px; background: var(--surface-container-low); padding: 0 28px; display: flex; align-items: center; gap: 18px; }
+  .pill .big-title { font-size: 30px; }
+  .pill-spacer { flex: 1; }
+  #all-off { height: 64px; padding: 0 28px 0 22px; border-radius: 32px; background: var(--violet); color: #ffffff; font-size: 18px; gap: 10px; }
+  html.night #all-off { color: #24124a; }
+  #all-off:disabled { background: var(--surface-container-low); color: var(--disabled); }
+  #climate-grid { position: absolute; left: 0; top: 104px; right: 24px; bottom: 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr); gap: 16px; }
+  .clim { display: flex; flex-direction: column; padding: 22px 26px; border-radius: 32px; background: var(--surface-container-low); min-height: 0; }
+  .clim.unavail { opacity: 0.5; }
+  .clim-head { display: flex; align-items: center; justify-content: space-between; }
+  .clim-name { font-size: 28px; font-weight: 500; }
+  .clim-act { height: 34px; padding: 0 14px; border-radius: 17px; font-size: 15px; font-weight: 600; background: var(--surface-container-high); }
+  .clim-act.heating { background: var(--primary-container); color: var(--on-primary-container); }
+  .clim-body { display: flex; align-items: center; justify-content: space-between; flex: 1; gap: 20px; }
+  .clim-now { font-size: 96px; font-weight: 300; line-height: 1; letter-spacing: -3px; color: var(--primary); }
+  .clim-nowl { font-size: 15px; color: var(--on-surface-variant); }
+  .clim-set { display: flex; align-items: center; gap: 8px; height: 88px; border-radius: 44px; padding: 0 10px; background: var(--secondary-container); color: var(--on-secondary-container); }
+  .round { width: 68px; height: 68px; border-radius: 34px; background: #fffaf4; color: var(--on-secondary-container);
+    display: flex; align-items: center; justify-content: center; }
+  .round.plus { background: var(--on-secondary-container); color: #ffffff; }
+  .round:active { opacity: 0.7; }
+  .round:disabled { opacity: 0.4; }
+  .clim-target { width: 108px; text-align: center; }
+  .clim-tl { font-size: 13px; font-weight: 600; }
+  .clim-tv { font-size: 34px; font-weight: 500; }
+  .clim .segs { align-self: flex-start; }
+  #lights-grid { position: absolute; left: 0; top: 104px; right: 24px; bottom: 24px; overflow-y: auto; display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+  .room { border-radius: 28px; background: var(--surface-container-low); padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  .room-head { display: flex; align-items: center; justify-content: space-between; padding: 0 6px; }
+  .room-name { font-size: 20px; font-weight: 500; }
+  .room-count { font-size: 14px; color: var(--on-surface-variant); }
+  .lt { position: relative; height: 64px; flex-shrink: 0; border-radius: 20px; background: var(--surface-container-high); overflow: hidden;
+    display: flex; align-items: center; gap: 12px; padding: 0 16px 0 10px; }
+  .lt:active { background: var(--pressed); }
+  .lt.on { background: var(--peach); }
+  .lt.unavail { opacity: 0.5; }
+  .lt-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--btn); }
+  .lt-ic { position: relative; width: 44px; height: 44px; border-radius: 22px; background: var(--surface-container-highest);
+    color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .lt.on .lt-ic { background: var(--violet); color: #ffffff; }
+  html.night .lt.on { background: #5a4038; }
+  html.night .lt.on .lt-fill { background: #8a5a48; }
+  html.night .lt.on .lt-ic { color: #24124a; background: #e6dcff; }
+  .lt-name { position: relative; flex: 1; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lt-label { position: relative; font-size: 16px; font-weight: 600; color: var(--on-surface-variant); }
+  .lt.on .lt-label { color: var(--on-primary-container); }
+  html.night .lt.on .lt-label { color: #ffe8dc; }
+
+  #mu-shelves { display: flex; gap: 8px; margin-top: 14px; overflow-x: auto; flex-shrink: 0; }
+  #mu-shelves .chip { background: var(--surface-container-high); }
+  #mu-shelves .chip.on { background: var(--secondary-container); color: var(--on-secondary-container); }
+  #mu-lib { flex: 1; min-height: 0; overflow-y: auto; margin-top: 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-content: start; }
+  .tile { text-align: left; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .tile-art { display: block; width: 100%; height: 0; padding-bottom: 100%; position: relative; border-radius: 20px; background: var(--surface-container-high); overflow: hidden; }
+  .tile-art.round { border-radius: 50%; }
+  .tile-art img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+  .tile-t { font-size: 15px; line-height: 19px; max-height: 38px; overflow: hidden; padding: 0 4px; }
+  #mu-lib .rc-empty-s { grid-column: 1 / -1; }
+
+  /* recipes */
+  #rc-top { position: absolute; left: 0; top: 24px; right: 24px; height: 64px; display: flex; align-items: center; gap: 12px; }
+  #rc-searchrow { flex: 1; display: flex; gap: 8px; min-width: 0; }
+  #rc-q { flex: 1; min-width: 0; height: 64px; border-radius: 32px; border: 0; background: var(--surface-container-low); color: var(--on-surface);
+    padding: 0 26px; font: inherit; font-size: 19px; -webkit-user-select: text; user-select: text; }
+  #rc-q:focus { outline: 2px solid var(--primary); outline-offset: -2px; }
+  #rc-go { height: 64px; padding: 0 26px; border-radius: 32px; font-size: 18px; }
+  #rc-top .segs { height: 64px; box-sizing: border-box; padding: 8px; border-radius: 32px; background: var(--surface-container-low); }
+  #rc-top .seg { height: 48px; border-radius: 24px; font-size: 18px; }
+  #rc-chips { position: absolute; left: 0; top: 104px; right: 24px; height: 48px; display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; }
+  .chip { flex-shrink: 0; height: 48px; padding: 0 18px; border-radius: 24px; background: var(--surface-container-low); font-size: 17px;
+    display: inline-flex; align-items: center; gap: 6px; }
+  .chip.on { background: #ffd6bf; color: #4a1d05; font-weight: 600; }
+  html.night .chip.on { background: #5a4038; color: #ffe8dc; }
+  #rc-grid { position: absolute; left: 0; top: 168px; right: 24px; bottom: 84px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .rcard { position: relative; border-radius: 28px; background: var(--surface-container-low); overflow: hidden; display: flex; flex-direction: column;
+    text-align: left; min-height: 0; padding: 0; align-items: stretch; }
+  .rimg { display: block; width: 100%; height: 130px; flex-shrink: 0; background: var(--surface-container-high); overflow: hidden; }
+  .rimg img { width: 100%; height: 130px; object-fit: cover; display: block; }
+  .rheart { position: absolute; right: 10px; top: 10px; width: 44px; height: 44px; border-radius: 22px; background: rgba(255, 250, 244, 0.9);
+    color: #2b2420; display: flex; align-items: center; justify-content: center; }
+  .rbody { flex: 1; padding: 10px 16px 12px; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+  .rtitle { font-size: 18px; font-weight: 500; line-height: 22px; max-height: 44px; overflow: hidden; }
+  .rtags { display: flex; gap: 6px; overflow: hidden; white-space: nowrap; }
+  .rtag { height: 26px; padding: 0 10px; border-radius: 13px; background: var(--surface-container-high); color: var(--on-surface-variant); font-size: 13px;
+    display: inline-flex; align-items: center; flex-shrink: 0; }
+  .rtag.big { height: 32px; padding: 0 14px; border-radius: 16px; font-size: 15px; }
+  .rmeta { margin-top: auto; font-size: 14px; color: var(--on-surface-variant); }
+  .rc-empty { grid-column: 1 / -1; grid-row: 1 / -1; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--on-surface-variant); }
+  #rc-foot { position: absolute; left: 0; right: 24px; bottom: 20px; height: 48px; display: flex; align-items: center; gap: 10px; font-size: 16px; color: var(--on-surface-variant); }
+  #rc-foot .round { background: var(--surface-container-low); color: var(--on-surface); }
+  #rd-top { position: absolute; left: 0; top: 24px; right: 24px; height: 64px; display: flex; align-items: center; gap: 12px; }
+  #rd-top .tonal { height: 64px; border-radius: 32px; padding: 0 28px 0 18px; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+  #rd-pos { height: 64px; padding: 0 22px; border-radius: 32px; background: var(--surface-container-low); display: flex; align-items: center; font-size: 17px; color: var(--on-surface-variant); }
+  .rd-btn { width: 64px; height: 64px; border-radius: 32px; background: var(--surface-container-low); color: var(--on-surface); display: flex; align-items: center; justify-content: center; }
+  .rd-btn:disabled { opacity: 0.4; }
+  .rd-btn.fav { background: #ffd6e2; }
+  #rd-title-card { position: absolute; left: 0; top: 104px; width: 560px; height: 108px; border-radius: 32px; background: var(--surface-container-low); padding: 0 26px;
+    box-sizing: border-box; display: flex; align-items: center; }
+  #rd-title { font-size: 28px; font-weight: 500; line-height: 34px; max-height: 68px; overflow: hidden; }
+  #rd-ing-card { position: absolute; left: 0; top: 228px; bottom: 24px; width: 560px; border-radius: 32px; background: var(--surface-container-low); padding: 18px 26px 12px;
+    box-sizing: border-box; display: flex; flex-direction: column; }
+  #rd-ings { flex: 1; min-height: 0; overflow-y: auto; margin-top: 4px; }
+  .ing-group { font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--on-surface-variant); padding: 10px 0 2px; }
+  .ing { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; padding: 8px 0; border-top: 1px solid var(--surface-container-high); font-size: 17px; line-height: 22px; }
+  .ing-dot { width: 28px; height: 28px; border-radius: 14px; box-sizing: border-box; border: 2px solid var(--on-surface-variant); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; }
+  .ing.done { color: var(--on-surface-variant); text-decoration: line-through; }
+  .ing.done .ing-dot { background: var(--mint); border-color: var(--on-mint); color: var(--on-mint); }
+  #rd-photo { position: absolute; left: 576px; top: 104px; right: 24px; height: 180px; border-radius: 32px; background-color: var(--surface-container-high);
+    background-size: cover; background-position: center; }
+  #rd-method { position: absolute; left: 576px; top: 300px; right: 24px; bottom: 24px; border-radius: 32px; background: var(--surface-container-low); padding: 18px 22px 14px;
+    box-sizing: border-box; display: flex; flex-direction: column; }
+  #rd-steps { flex: 1; min-height: 0; overflow-y: auto; margin-top: 6px; }
+  .step { width: 100%; display: flex; align-items: flex-start; gap: 14px; text-align: left; padding: 8px 12px; border-radius: 22px; margin-bottom: 2px; font-size: 17px; line-height: 23px; }
+  .step-n { width: 32px; height: 32px; border-radius: 16px; flex-shrink: 0; background: var(--surface-container-high); font-size: 16px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; }
+  .step-t { flex: 1; padding-top: 4px; }
+  .step.past { color: var(--on-surface-variant); }
+  .step.past .step-n { background: var(--mint); color: var(--on-mint); }
+  .step.now { background: #ffd6bf; color: #4a1d05; font-size: 19px; line-height: 25px; padding: 12px 14px; }
+  .step.now .step-n { background: #4a1d05; color: #ffd6bf; }
+  html.night .step.now { background: #5a4038; color: #ffe8dc; }
+  html.night .step.now .step-n { background: #ffe8dc; color: #4a1d05; }
+  .rd-note { display: block; margin-top: 6px; padding: 8px 14px; border-radius: 18px; background: #fde9a8; color: #3d2600; font-size: 14px; line-height: 19px; }
+  .rc-empty-s { padding: 24px 6px; font-size: 18px; color: var(--on-surface-variant); }
+
+  /* music */
+  #mu-now { position: absolute; left: 0; top: 24px; bottom: 24px; width: 600px; border-radius: 32px; background: var(--surface-container-low);
+    padding: 28px 32px 26px; display: flex; flex-direction: column; }
+  #mu-top { display: flex; gap: 26px; }
+  #mu-art { width: 220px; height: 220px; border-radius: 28px; background: var(--secondary-container); color: #5b3f9a;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+  #mu-art img { width: 220px; height: 220px; display: block; }
+  #mu-meta { display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
+  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; color: var(--on-surface-variant); }
+  #mu-meta .eyebrow { color: var(--violet); }
+  #mu-title { font-size: 36px; font-weight: 500; line-height: 42px; margin-top: 8px; max-height: 84px; overflow: hidden; }
+  #mu-artist { font-size: 20px; color: var(--on-surface-variant); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #mu-on { align-self: flex-start; height: 32px; padding: 0 12px; border-radius: 16px; background: var(--surface-container-high); font-size: 14px;
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; }
+  #mu-bar { display: block; height: 8px; border-radius: 4px; background: var(--surface-container-highest); margin-top: 30px; }
+  #mu-fill { display: block; width: 0; height: 8px; border-radius: 4px; background: var(--violet); }
+  #mu-times { display: flex; justify-content: space-between; font-size: 14px; color: var(--on-surface-variant); margin-top: 6px; }
+  #mu-ctl { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+  #mu-vol { height: 64px; border-radius: 32px; background: var(--surface-container-high); padding: 0 8px; display: flex; align-items: center; gap: 4px; }
+  #mu-vol-v { width: 52px; text-align: center; font-size: 17px; font-weight: 500; }
+  .mu-btn { width: 64px; height: 64px; border-radius: 32px; background: var(--surface-container-high); color: var(--on-surface); display: flex; align-items: center; justify-content: center; }
+  #mu-play { width: 96px; height: 80px; border-radius: 28px; background: var(--violet); color: #ffffff; }
+  html.night #mu-play { color: #24124a; }
+  .mu-btn:active, .icon-btn:active { opacity: 0.7; }
+  #mu-spk { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .spk { height: 52px; padding: 0 20px 0 14px; border-radius: 26px; background: var(--surface-container-high); font-size: 17px; font-weight: 500;
+    display: flex; align-items: center; gap: 8px; }
+  .spk.on { background: var(--secondary-container); color: var(--on-secondary-container); font-weight: 600; }
+  #mu-find { position: absolute; left: 616px; top: 24px; right: 24px; bottom: 24px; border-radius: 32px; background: var(--surface-container-low);
+    padding: 26px; display: flex; flex-direction: column; }
+  #mu-searchrow { display: flex; gap: 8px; }
+  #mu-q { flex: 1; min-width: 0; height: 60px; border-radius: 30px; border: 0; background: var(--surface-container-high); color: var(--on-surface);
+    padding: 0 22px; font: inherit; font-size: 18px; -webkit-user-select: text; user-select: text; }
+  #mu-q:focus { outline: 2px solid var(--primary); outline-offset: -2px; }
+  #mu-go { height: 60px; padding: 0 24px; border-radius: 30px; background: var(--mint); color: var(--on-mint); font-size: 17px; font-weight: 600; }
+  #mu-hint { font-size: 14px; color: var(--on-surface-variant); margin: 10px 0 0 6px; }
+  #mu-recent { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .rc { height: 48px; padding: 0 18px; border-radius: 24px; background: var(--surface-container-high); font-size: 16px; display: inline-flex; align-items: center; }
+  #mu-find .eyebrow { margin-top: 26px; }
+
+  /* EV */
+  #ev-charger { position: absolute; left: 0; top: 24px; width: 640px; height: 336px; border-radius: 32px; background: var(--surface-container-low);
+    padding: 24px 28px; display: flex; flex-direction: column; }
+  .row-between { display: flex; align-items: center; justify-content: space-between; }
+  #ev-state { height: 36px; padding: 0 14px; border-radius: 18px; background: var(--surface-container-high); font-size: 15px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 8px; }
+  #ev-state.on { background: var(--mint); color: var(--on-mint); }
+  #ev-main { display: flex; align-items: center; gap: 20px; margin-top: 14px; }
+  #ev-blob { width: 96px; height: 96px; border-radius: 44% 56% 52% 48% / 50% 44% 56% 50%; background: var(--mint); color: var(--mint-ink);
+    display: flex; align-items: center; justify-content: center; }
+  #ev-kw { font-size: 88px; font-weight: 300; line-height: 1; letter-spacing: -3px; color: var(--mint-ink); }
+  #ev-kwu { font-size: 26px; color: var(--on-surface-variant); margin-left: 8px; }
+  #ev-nums { display: flex; gap: 10px; margin-top: 18px; margin-bottom: 14px; }
+  .num-t { flex: 1; border-radius: 18px; background: var(--surface-container-high); padding: 10px 14px; }
+  .num-t b { display: block; font-size: 26px; font-weight: 500; }
+  .num-t span { font-size: 13px; color: var(--on-surface-variant); }
+  #ev-btns { display: flex; gap: 10px; margin-top: auto; }
+  #ev-btns button { flex: 1; height: 56px; border-radius: 28px; font-size: 17px; font-weight: 600; text-align: center; justify-content: center; }
+  #ev-start { background: var(--mint-ink); color: #ffffff; }
+  html.night #ev-start { background: var(--mint); color: var(--on-mint); }
+  #ev-stop { border: 1px solid var(--outline); }
+  #ev-btns button:disabled { opacity: 0.4; }
+  #ev-price { position: absolute; left: 0; top: 376px; width: 640px; bottom: 24px; border-radius: 32px; background: var(--surface-container-low);
+    padding: 22px 28px 18px; display: flex; flex-direction: column; }
+  #ev-now { font-size: 20px; } #ev-now b { font-size: 30px; font-weight: 500; color: var(--primary); }
+  #ev-bars { flex: 1; position: relative; display: flex; align-items: flex-end; gap: 4px; margin-top: 14px; }
+  #ev-bars i { flex: 1; border-radius: 6px 6px 3px 3px; background: var(--mint); }
+  #ev-bars i.hi { background: var(--btn); }
+  #ev-bars i.now { background: var(--primary); }
+  #ev-cap { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--primary); }
+  #ev-cap span { position: absolute; right: 0; bottom: 4px; font-size: 13px; font-weight: 600; color: var(--primary); }
+  #ev-axis { display: flex; justify-content: space-between; font-size: 13px; color: var(--on-surface-variant); margin-top: 8px; }
+  #ev-plan { position: absolute; left: 656px; top: 24px; right: 24px; height: 420px; border-radius: 32px; background: var(--surface-container-low);
+    padding: 22px 24px; display: flex; flex-direction: column; }
+  #ev-modes { margin-top: 10px; height: 52px; border-radius: 26px; }
+  #ev-modes .seg { flex: 1; height: 44px; border-radius: 22px; }
+  #ev-modes .seg.on { background: var(--mint); color: var(--on-mint); }
+  #ev-plan-txt { font-size: 14px; color: var(--on-surface-variant); margin: 8px 0 0 6px; }
+  .step { display: flex; align-items: center; min-height: 64px; border-top: 1px solid var(--outline-variant); margin-top: 6px; }
+  .step.dim { opacity: 0.45; }
+  .step-l { flex: 1; display: flex; flex-direction: column; font-size: 18px; }
+  .step-l span { font-size: 13px; color: var(--on-surface-variant); }
+  .step .icon-btn { background: var(--surface-container-high); width: 48px; height: 48px; }
+  .step-v { width: 84px; text-align: center; font-size: 20px; font-weight: 500; }
+  #ev-sw { position: absolute; left: 656px; top: 460px; right: 24px; bottom: 24px; border-radius: 32px; background: var(--surface-container-low);
+    padding: 10px 24px; display: flex; flex-direction: column; justify-content: center; }
+  .sw-row { display: flex; align-items: center; min-height: 64px; border-bottom: 1px solid var(--outline-variant); font-size: 18px; }
+  .sw-row:last-child { border-bottom: 0; }
+  .sw-row > span { flex: 1; }
+  .sw-row b { font-size: 18px; font-weight: 500; color: var(--mint-ink); }
+  .sw-row .sw { width: 56px; height: 32px; border-radius: 16px; }
+
+  /* light sheet */
+  #scrim { position: absolute; left: 0; top: 0; width: 1280px; height: 800px; background: rgba(0, 0, 0, 0.32); z-index: 3; }
+  #sheet { position: absolute; left: 320px; bottom: 0; width: 640px; padding: 12px 32px 32px; border-radius: 28px 28px 0 0;
+    background: var(--surface-container-low); z-index: 4; }
+  #todo-sheet { z-index: 4; }
+  .handle { width: 32px; height: 4px; border-radius: 2px; background: var(--outline); margin: 0 auto 20px; }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; }
+  #sheet-name { font-size: 28px; font-weight: 500; }
+  .sw { width: 52px; height: 32px; border-radius: 16px; border: 2px solid var(--outline); background: var(--surface-container-high);
+    position: relative; flex-shrink: 0; }
+  .sw::before { content: ''; position: absolute; left: 6px; top: 6px; width: 16px; height: 16px; border-radius: 8px; background: var(--outline); }
+  .sw[aria-checked="true"] { background: var(--primary); border-color: var(--primary); }
+  .sw[aria-checked="true"]::before { left: 22px; top: 2px; width: 24px; height: 24px; border-radius: 12px; background: var(--on-primary); }
+  .sheet-row { margin-top: 28px; }
+  .sheet-lbl { display: flex; justify-content: space-between; font-size: 16px; font-weight: 500; letter-spacing: 0.1px;
+    color: var(--on-surface-variant); margin-bottom: 8px; }
+  .range { -webkit-appearance: none; appearance: none; width: 100%; height: 44px; margin: 0; background: none; --v: 50%; }
+  .range::-webkit-slider-runnable-track { height: 16px; border-radius: 8px;
+    background: linear-gradient(to right, var(--primary) 0, var(--primary) var(--v), var(--surface-container-highest) var(--v)); }
+  .range::-webkit-slider-thumb { -webkit-appearance: none; width: 6px; height: 44px; margin-top: -14px; border-radius: 3px;
+    background: var(--primary); }
+  .range.ct::-webkit-slider-runnable-track { background: linear-gradient(to right, #ffb05a, #ffe3c2 50%, #dbe8ff); }
+  .range.ct::-webkit-slider-thumb { background: var(--ct-thumb); }
+  .range:disabled::-webkit-slider-runnable-track { background: var(--surface-container-highest); }
+  .range:disabled::-webkit-slider-thumb { background: var(--outline); }
+  .sheet-foot { display: flex; justify-content: flex-end; margin-top: 24px; }
+
+  #toast { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 14px 24px; border-radius: 16px;
+    background: var(--on-surface); color: var(--surface-container-low); font-size: 16px; z-index: 5; }
+  #stale { position: absolute; left: 108px; bottom: 6px; font-size: 14px; color: var(--error); z-index: 5; }
+</style>
+</head>
+<body>
+<div id="bg" aria-hidden="true">
+  <span id="hill1"></span>
+  <span id="halo"></span>
+  <span id="orb"></span>
+  <span class="moon" style="left:500px;top:170px;width:54px;height:54px"></span>
+  <span class="moon" style="left:600px;top:250px;width:36px;height:36px"></span>
+  <span class="moon" style="left:540px;top:290px;width:24px;height:24px"></span>
+  <span class="star" style="left:150px;top:300px;width:3px;height:3px"></span>
+  <span class="star" style="left:290px;top:380px;width:2px;height:2px"></span>
+  <span class="star" style="left:380px;top:250px;width:2px;height:2px"></span>
+  <span class="star" style="left:610px;top:40px;width:3px;height:3px"></span>
+  <span class="star" style="left:780px;top:120px;width:2px;height:2px"></span>
+  <span class="star" style="left:830px;top:300px;width:4px;height:4px"></span>
+  <span class="star" style="left:960px;top:60px;width:2px;height:2px"></span>
+  <span class="star" style="left:1040px;top:210px;width:3px;height:3px"></span>
+  <span class="star" style="left:1180px;top:110px;width:2px;height:2px"></span>
+  <span class="star" style="left:700px;top:360px;width:3px;height:3px"></span>
+  <span id="hill2"></span>
+</div>
+<div id="app">
+  <nav id="rail" aria-label="Views">
+    <button id="nav-home" class="rail-btn on" aria-label="Home">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5M5 9.5V20h14V9.5M10 20v-6h4v6"></path></svg>
+    </button>
+    <button id="nav-forecast" class="rail-btn" aria-label="Forecast">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 3.5v1.2M3.6 8.6h1.2M5 5.1l.9.9M12.1 5.1l-.9.9M5.6 10.9A3.6 3.6 0 0 1 11.7 7.4M9 20h8.5a3.5 3.5 0 0 0 .5-6.96A5 5 0 0 0 8.4 13.6 3.2 3.2 0 0 0 9 20z"></path></svg>
+    </button>
+    <button id="nav-cal" class="rail-btn" aria-label="Calendar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5a2.5 2.5 0 0 1 2.5-2.5h12a2.5 2.5 0 0 1 2.5 2.5v10.5a2.5 2.5 0 0 1-2.5 2.5H6a2.5 2.5 0 0 1-2.5-2.5zM3.5 10h17M8 3v4M16 3v4"></path></svg>
+    </button>
+    <button id="nav-climate" class="rail-btn" aria-label="Climate">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0zM12 17.5V11"></path></svg>
+    </button>
+    <button id="nav-lights" class="rail-btn" aria-label="Lights">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"></path></svg>
+    </button>
+    <button id="nav-music" class="rail-btn" aria-label="Music">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>
+    </button>
+    <button id="nav-ev" class="rail-btn" aria-label="EV charging">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 6 13.5h5.5L10 21l8-11.5h-5.5z"></path></svg>
+    </button>
+    <button id="nav-recipes" class="rail-btn" aria-label="Recipes">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17 21V3c-2.2 1-3.5 3.6-3.5 7v3H17"></path></svg>
+    </button>
+    <button id="nav-set" class="rail-btn" aria-label="Settings" style="display:none">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
+    </button>
+  </nav>
+
+  <div id="view-home" class="view">
+    <section id="clockcard">
+      <div id="clock">--:--</div>
+      <div id="datebar">
+        <span id="date"></span>
+        <button id="wchip" aria-label="Open forecast"><span id="wchip-icon"></span><span id="wchip-text"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+        </button>
+      </div>
+    </section>
+    <section id="right" aria-label="Today">
+      <div id="right-head">
+        <div class="title-m">Today</div>
+        <button id="open-cal" class="tonal">Calendar
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+        </button>
+      </div>
+      <div id="agenda"></div>
+      <div id="bins"></div>
+      <div id="todo-box">
+        <div id="todo-head"><div class="title-m">To do</div><span id="todo-count"></span></div>
+        <div id="todo-list"></div>
+      </div>
+    </section>
+    <button id="todo-add" class="tonal">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"></path></svg>Add to-do</button>
+    <section id="mc-box" aria-label="Music">
+      <button id="mc-open">
+        <span id="mc-art"></span>
+        <span id="mc-meta"><span id="mc-title"></span><span id="mc-artist"></span><span id="mc-on"></span></span>
+      </button>
+      <div id="mc-ctl">
+        <span id="mc-vol">
+          <button id="mc-vdown" class="icon-btn" aria-label="Volume down"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"></path></svg></button>
+          <span id="mc-vol-v"></span>
+          <button id="mc-vup" class="icon-btn" aria-label="Volume up"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"></path></svg></button>
+        </span>
+        <span class="spacer"></span>
+        <button id="mc-prev" class="mu-btn" aria-label="Previous"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 6l-9 6 9 6z"></path><rect x="5.5" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
+        <button id="mc-play" class="mu-btn" aria-label="Play"></button>
+        <button id="mc-next" class="mu-btn" aria-label="Next"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 6l9 6-9 6z"></path><rect x="16" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
+      </div>
+    </section>
+  </div>
+
+  <div id="view-forecast" class="view" style="display:none">
+    <section id="fc-now">
+      <div id="fc-now-head"><span class="big-title">Now</span><span id="fc-src" class="sub"></span></div>
+      <div id="fc-now-body">
+        <span id="fc-blob"></span>
+        <span><div id="fc-temp"></div><div id="fc-cond"></div></span>
+      </div>
+      <div id="fc-today"></div>
+    </section>
+    <section id="fc-details" aria-label="Details"></section>
+    <section id="fc-days" aria-label="Next days">
+      <div id="fc-days-head"><span class="big-title">Next days</span><span class="sub">Day by day</span></div>
+      <div id="fc-list"></div>
+    </section>
+  </div>
+
+  <div id="view-cal" class="view" style="display:none">
+    <section id="cal-main">
+      <div id="cal-head">
+        <div id="cal-title"></div>
+        <button id="cal-prev" class="icon-btn" aria-label="Previous">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+        </button>
+        <button id="cal-today" class="outlined">Today</button>
+        <button id="cal-next" class="icon-btn" aria-label="Next">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+        </button>
+        <div id="modes" class="segs">
+          <button id="mode-month" class="seg on"><span class="chk"></span>Month</button>
+          <button id="mode-week" class="seg"><span class="chk"></span>Week</button>
+        </div>
+      </div>
+      <div id="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
+      <div id="cal-grid" class="month rows5"></div>
+    </section>
+    <aside id="cal-side" aria-label="Selected day">
+      <div id="side-label" class="side-label"></div>
+      <div id="side-date"></div>
+      <div id="side-bin"></div>
+      <div id="side-events"></div>
+    </aside>
+  </div>
+
+  <div id="view-climate" class="view" style="display:none">
+    <div class="pill-head"><div class="pill"><span class="big-title">Climate</span><span id="climate-sub" class="sub"></span></div></div>
+    <div id="climate-grid"></div>
+  </div>
+
+  <div id="view-lights" class="view" style="display:none">
+    <div class="pill-head">
+      <div class="pill"><span class="big-title">Lights</span><span id="lights-sub" class="sub">Hold a light for brightness and colour</span></div>
+      <span class="pill-spacer"></span>
+      <button id="all-off" class="tonal">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8M7.5 6.5a7 7 0 1 0 9 0"></path></svg>All off</button>
+    </div>
+    <div id="lights-grid"></div>
+  </div>
+
+  <div id="view-music" class="view" style="display:none">
+    <section id="mu-now" aria-label="Now playing">
+      <div id="mu-top">
+        <span id="mu-art"></span>
+        <span id="mu-meta"><span class="eyebrow" id="mu-eyebrow">NOW PLAYING</span><span id="mu-title"></span><span id="mu-artist"></span>
+          <span id="mu-on"></span></span>
+      </div>
+      <span id="mu-bar"><span id="mu-fill"></span></span>
+      <div id="mu-times"><span id="mu-pos"></span><span id="mu-dur"></span></div>
+      <div id="mu-ctl">
+        <span id="mu-vol">
+          <button id="mu-vdown" class="icon-btn" aria-label="Volume down"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"></path></svg></button>
+          <span id="mu-vol-v"></span>
+          <button id="mu-vup" class="icon-btn" aria-label="Volume up"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"></path></svg></button>
+        </span>
+        <span style="flex:1"></span>
+        <button id="mu-prev" class="mu-btn" aria-label="Previous"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 6l-9 6 9 6z"></path><rect x="5.5" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
+        <button id="mu-play" class="mu-btn" aria-label="Play"></button>
+        <button id="mu-next" class="mu-btn" aria-label="Next"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 6l9 6-9 6z"></path><rect x="16" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
+      </div>
+      <span class="eyebrow" style="margin-top:auto">PLAY ON</span>
+      <div id="mu-spk"></div>
+    </section>
+    <section id="mu-find" aria-label="Find music">
+      <div id="mu-searchrow"><input id="mu-q" type="text" placeholder="Song, artist or playlist" autocomplete="off" maxlength="80" aria-label="Search music"><button id="mu-go">Play</button></div>
+      <span id="mu-hint">Alexa searches Spotify and plays the best match.</span>
+      <div id="mu-shelves"></div>
+      <div id="mu-lib"></div>
+      <span class="eyebrow" id="mu-recent-l">RECENT</span>
+      <div id="mu-recent"></div>
+    </section>
+  </div>
+
+  <div id="view-recipes" class="view" style="display:none">
+    <div id="rc-browse">
+      <div id="rc-top">
+        <span id="rc-searchrow"><input id="rc-q" type="text" placeholder="Search recipes by name or ingredient" autocomplete="off" maxlength="60" aria-label="Search recipes"><button id="rc-go" class="tonal">Search</button></span>
+        <span class="segs"><button id="rc-tab-all" class="seg on">All recipes</button><button id="rc-tab-fav" class="seg">Favourites <span id="rc-fav-n"></span></button></span>
+      </div>
+      <div id="rc-chips"></div>
+      <div id="rc-grid"></div>
+      <div id="rc-foot"><span id="rc-count"></span><span style="flex:1"></span><span id="rc-page"></span>
+        <button id="rc-prev" class="round" aria-label="Previous page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+        <button id="rc-next" class="round" aria-label="Next page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></button></div>
+    </div>
+    <div id="rc-detail" style="display:none">
+      <div id="rd-top">
+        <button id="rd-back" class="tonal"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Recipes</button>
+        <span id="rd-pos"></span><span style="flex:1"></span>
+        <button id="rd-prev" class="rd-btn" aria-label="Previous recipe"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+        <button id="rd-next" class="rd-btn" aria-label="Next recipe"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></button>
+        <button id="rd-heart" class="rd-btn" aria-label="Add to favourites"></button>
+      </div>
+      <section id="rd-ing-card" aria-label="Ingredients">
+        <div class="row-between"><span class="big-title" style="font-size:24px">Ingredients</span><span id="rd-ing-n" class="sub"></span></div>
+        <div id="rd-ings"></div>
+      </section>
+      <section id="rd-title-card"><span id="rd-title"></span></section>
+      <div id="rd-photo" aria-hidden="true"></div>
+      <section id="rd-method" aria-label="Method">
+        <div class="row-between"><span class="big-title" style="font-size:24px">Method</span><span id="rd-step-n" class="sub"></span></div>
+        <div id="rd-steps"></div>
+      </section>
+    </div>
+  </div>
+
+  <div id="view-ev" class="view" style="display:none">
+    <section id="ev-charger" aria-label="Charger">
+      <div class="row-between"><span class="big-title">EV charging</span><span id="ev-state"></span></div>
+      <div id="ev-main"><span id="ev-blob"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 6 13.5h5.5L10 21l8-11.5h-5.5z"></path></svg></span>
+        <span><span id="ev-kw"></span><span id="ev-kwu">kW</span></span></div>
+      <div id="ev-nums"></div>
+      <div id="ev-btns"><button id="ev-start" class="tonal">Start charging</button><button id="ev-stop" class="tonal">Pause charging</button></div>
+    </section>
+    <section id="ev-price" aria-label="Price">
+      <div class="row-between"><span id="ev-now"></span><span id="ev-below" class="sub"></span></div>
+      <div id="ev-bars"><span id="ev-cap"><span id="ev-cap-l"></span></span></div>
+      <div id="ev-axis"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
+    </section>
+    <section id="ev-plan" aria-label="Plan">
+      <span class="eyebrow">CHARGE MODE</span>
+      <div id="ev-modes" class="segs"></div>
+      <span id="ev-plan-txt"></span>
+      <div id="ev-steps"></div>
+    </section>
+    <section id="ev-sw" aria-label="Switches"></section>
+  </div>
+</div>
+<div id="stale"></div>
+<div id="toast" style="display:none"></div>
+<div id="scrim" style="display:none"></div>
+<div id="todo-sheet" style="display:none" role="dialog" aria-labelledby="todo-sheet-name">
+  <div id="todo-sheet-name" class="big-title">New to-do</div>
+  <input id="todo-input" type="text" maxlength="120" placeholder="What needs doing?" autocomplete="off" aria-label="To-do">
+  <div class="sheet-lbl" style="margin:20px 0 8px"><span>Remind me (push to phones)</span></div>
+  <div id="todo-when" class="segs"></div>
+  <div class="sheet-foot"><button id="todo-cancel" class="outlined">Cancel</button><button id="todo-save" class="tonal">Add</button></div>
+</div>
+<div id="set-sheet" style="display:none" role="dialog" aria-labelledby="set-title">
+  <div id="set-title" class="big-title">Settings</div>
+  <div id="set-ver"></div>
+  <div class="sheet-lbl" style="margin:20px 0 0"><span>Update address (where the files come from)</span></div>
+  <input id="set-url" type="text" maxlength="200" placeholder="http://<ip>:8099" autocomplete="off" autocapitalize="off" aria-label="Update address">
+  <div class="sheet-foot" style="gap:12px"><button id="set-reset" class="outlined">Use built-in</button><button id="set-close" class="outlined">Close</button><button id="set-update" class="tonal">Update now</button></div>
+</div>
+<div id="sheet" style="display:none" role="dialog" aria-labelledby="sheet-name">
+  <div class="handle"></div>
+  <div class="sheet-head"><div id="sheet-name"></div><button id="sheet-switch" class="sw" role="switch" aria-checked="false" aria-label="On"></button></div>
+  <div class="sheet-row"><div class="sheet-lbl"><span>Brightness</span><span id="sheet-bri-v"></span></div>
+    <input id="sheet-bri" class="range" type="range" min="1" max="100" value="100" aria-label="Brightness"></div>
+  <div class="sheet-row" id="sheet-ct-row"><div class="sheet-lbl"><span>Colour temperature</span><span id="sheet-ct-v"></span></div>
+    <input id="sheet-ct" class="range ct" type="range" min="2202" max="6535" step="50" value="4000" aria-label="Colour temperature"></div>
+  <div class="sheet-foot"><button id="sheet-done" class="tonal">Done</button></div>
+</div>
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script src="home.js"></script>
+<script src="todo.js"></script>
+<script src="forecast.js"></script>
+<script src="calendar.js"></script>
+<script src="climate.js"></script>
+<script src="lights.js"></script>
+<script src="music.js"></script>
+<script src="ev.js"></script>
+<script src="recipes.js"></script>
+<script src="settings.js"></script>
+<script src="app.js"></script>
+<script>start(window.CONFIG);</script>
+</body>
+</html>

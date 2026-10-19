@@ -1,0 +1,38 @@
+{
+ "id": 2,
+ "type": "result",
+ "success": true,
+ "result": {
+  "context": {
+   "id": "x",
+   "parent_id": null,
+   "user_id": "x"
+  },
+  "response": {
+   "calendar.afvalwijzer_example": {
+    "events": [
+     {
+      "start": "2026-10-15",
+      "end": "2026-10-16",
+      "summary": "Mijnafvalwijzer: GFT"
+     },
+     {
+      "start": "2026-10-16",
+      "end": "2026-10-17",
+      "summary": "Mijnafvalwijzer: Plastic"
+     },
+     {
+      "start": "2026-10-21",
+      "end": "2026-10-22",
+      "summary": "Mijnafvalwijzer: Papier"
+     },
+     {
+      "start": "2026-10-22",
+      "end": "2026-10-23",
+      "summary": "Mijnafvalwijzer: GFT"
+     }
+    ]
+   }
+  }
+ }
+}
