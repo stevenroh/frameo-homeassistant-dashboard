@@ -21,6 +21,9 @@ function settingsSheet(ctx) {
     $('set-close').onclick = closeSettings;
     $('set-update').onclick = function () { kiosk.setUpdateUrl($('set-url').value); closeSettings(); kiosk.update(); };
     $('set-reset').onclick = function () { closeSettings(); kiosk.reset(); };
+    // An app installed before Quitter existed has no exit(); hide the button there.
+    if (kiosk.exit) $('set-exit').onclick = function () { closeSettings(); kiosk.exit(); };
+    else $('set-exit').style.display = 'none';
   }
 
   return kiosk ? { closeSheet: closeSettings } : {};

@@ -29,7 +29,8 @@ these; [TABLET.md](../TABLET.md) covers the port.
 | Offline | A native screen instead of WebView's error page |
 | Boot without Wi-Fi | A failed load retries every 5 s |
 | Remote debugging | Only with `--ez debug true` |
-| Home app | `--ez home true`, then `cmd package set-home-activity com.wesbos.homehq/.Home` |
+| Start at boot | On by default (`BootReceiver`); `--ez autostart false` turns it off |
+| Home app | `--ez home true`, then `cmd package set-home-activity com.wesbos.homehq/.Home` (Android 7+) |
 | Navigation bar | `NavigationService`, an accessibility service, for frames without one |
 | Page updates | `PageUpdater`, see [update-server.md](update-server.md) |
 

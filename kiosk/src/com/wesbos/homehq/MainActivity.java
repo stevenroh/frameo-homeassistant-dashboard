@@ -51,6 +51,7 @@ import java.io.File;
  *   <update_url>/manifest.json into files/page/ and loads them instead of the bundled ones. Set the address with
  *     adb shell am start -n com.wesbos.homehq/.MainActivity --es update_url http://<laptop>:8099
  * - Set the saved URL, used on every later launch: adb shell am start -n com.wesbos.homehq/.MainActivity --es url <url>
+ * - Starts by itself after a boot (BootReceiver); --ez autostart false turns that off, true back on.
  * - Offer the kiosk as a Home app (--ez home false undoes it), then pick it:
  *     adb shell am start -n com.wesbos.homehq/.MainActivity --ez home true
  *     adb shell cmd package set-home-activity com.wesbos.homehq/.Home
@@ -69,6 +70,7 @@ public class MainActivity extends Activity {
   static final float HOLD_SLOP_PX = 40;
   static final float HOLD_RIGHT = 80, HOLD_TOP = 360;
   static final String PREF_SLEEP = "sleep_minutes";
+  static final String PREF_AUTOSTART = "autostart";
   static final String PREF_UPDATE_URL = "update_url";
   static final int DEFAULT_SLEEP_MINUTES = 5;
 
@@ -189,6 +191,7 @@ public class MainActivity extends Activity {
     root.addView(cover);
     backlight = findBacklight();
     applySleepFlag(getIntent());
+    applyAutostartFlag(getIntent());
     applyUpdateUrl(getIntent());
     setContentView(root);
 
@@ -220,6 +223,7 @@ public class MainActivity extends Activity {
     applyDebugFlag(intent);
     applyHomeFlag(intent);
     applySleepFlag(intent);
+    applyAutostartFlag(intent);
     applyUpdateUrl(intent);
     String url = urlFrom(intent);
     if (url != null) {
@@ -319,6 +323,8 @@ public class MainActivity extends Activity {
     @JavascriptInterface public String photos() { return own() ? FramePhotos.list() : "[]"; }
     @JavascriptInterface public void update() { if (own()) runUpdate(); }
     @JavascriptInterface public void reset() { if (own()) runReset(); }
+    /** Settings' Quitter: the same as the menu's launcher entry (on a Frameo, its home screen is usually Frameo). */
+    @JavascriptInterface public void exit() { if (own()) runOnUiThread(MainActivity.this::openLauncher); }
   }
 
   private String savedUrl() {
@@ -555,6 +561,14 @@ public class MainActivity extends Activity {
     getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt(PREF_SLEEP, minutes).apply();
     Log.i(TAG, "Screen sleep after " + minutes + " min");
     scheduleSleep();
+  }
+
+  /** --ez autostart false|true: whether BootReceiver opens the dashboard after a boot (default true). */
+  private void applyAutostartFlag(Intent intent) {
+    if (intent == null || !intent.hasExtra(PREF_AUTOSTART)) return;
+    boolean on = intent.getBooleanExtra(PREF_AUTOSTART, true);
+    getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(PREF_AUTOSTART, on).apply();
+    Log.i(TAG, "Start at boot: " + on);
   }
 
   private static String findBacklight() {
