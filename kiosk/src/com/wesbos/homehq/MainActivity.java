@@ -75,6 +75,9 @@ public class MainActivity extends Activity {
   static final String PREF_AUTOSTART = "autostart";
   static final String PREF_UPDATE_URL = "update_url";
   static final int DEFAULT_SLEEP_MINUTES = 5;
+  // The app theme is the old fullscreen one, whose dialogs look pre-Material; dialogs ask for Material explicitly.
+  static final int DIALOG = android.R.style.Theme_Material_Light_Dialog_Alert;
+  static final String SHUTDOWN = "am start -a android.intent.action.ACTION_REQUEST_SHUTDOWN --ez android.intent.extra.KEY_CONFIRM false";
 
   private WebView web;
   private final Handler handler = new Handler(Looper.getMainLooper());
@@ -109,7 +112,7 @@ public class MainActivity extends Activity {
       Log.i(TAG, "Opening controls");
       // The menu is its own window, so taps on it never reach dispatchTouchEvent: no sleep while open.
       handler.removeCallbacks(goDark);
-      new AlertDialog.Builder(MainActivity.this)
+      new AlertDialog.Builder(MainActivity.this, DIALOG)
           .setTitle("Home HQ")
           .setItems(new String[] {"Ouvrir le lanceur", "Paramètres Android", "Paramètres Wi-Fi", "Recharger le tableau de bord", "Mettre à jour le tableau de bord"},
               (dialog, which) -> {
@@ -327,6 +330,12 @@ public class MainActivity extends Activity {
     @JavascriptInterface public void reset() { if (own()) runReset(); }
     /** Settings' Quitter: the same as the menu's launcher entry (on a Frameo, its home screen is usually Frameo). */
     @JavascriptInterface public void exit() { if (own()) runOnUiThread(MainActivity.this::openLauncher); }
+    /** Settings' Éteindre l'écran: the screen sleep, now; a touch wakes it. */
+    @JavascriptInterface public void screenOff() {
+      if (own()) runOnUiThread(() -> { handler.removeCallbacks(goDark); goDark.run(); });
+    }
+
+    /** Settings' Éteindre le cadre: asks, then shuts the frame down. */
     @JavascriptInterface public void shutdown() { if (own()) runOnUiThread(MainActivity.this::confirmShutdown); }
   }
 
@@ -615,19 +624,22 @@ public class MainActivity extends Activity {
     });
   }
 
-  /** Settings' Éteindre: asks first, then powers the frame off through su (reboot -p). */
+  /**
+   * A full shutdown through Android's own ShutdownThread, the one the power menu's Éteindre runs (apps and storage
+   * closed cleanly), started with ACTION_REQUEST_SHUTDOWN through su. `reboot -p` restarted this frame instead.
+   */
   private void confirmShutdown() {
-    new AlertDialog.Builder(this)
+    new AlertDialog.Builder(this, DIALOG)
         .setTitle("Éteindre le cadre ?")
-        .setMessage("Pour le rallumer, utilisez le bouton marche/arrêt du cadre.")
+        .setMessage("Pour le rallumer, appuyez sur le bouton marche/arrêt du cadre.")
         .setPositiveButton("Éteindre", (d, w) -> ROOT.execute(() -> {
           try {
-            Runtime.getRuntime().exec(new String[] {"su", "-c", "reboot -p"}).waitFor();
+            Runtime.getRuntime().exec(new String[] {"su", "-c", SHUTDOWN}).waitFor();
           } catch (Exception ex) {
             Log.w(TAG, "Shutdown failed: " + ex);
           }
-          // Still running a moment later: su refused or reboot is missing.
-          handler.postDelayed(() -> toast("Impossible d’éteindre le cadre"), 5000);
+          // Still running a while later: su refused or the system ignored the request.
+          handler.postDelayed(() -> toast("Impossible d’éteindre le cadre"), 15000);
         }))
         .setNegativeButton("Annuler", null)
         .setOnDismissListener(d -> scheduleSleep())

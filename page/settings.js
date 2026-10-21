@@ -24,8 +24,10 @@ function settingsSheet(ctx) {
     // An app installed before Quitter existed has no exit(); hide the button there.
     if (kiosk.exit) $('set-exit').onclick = function () { closeSettings(); kiosk.exit(); };
     else $('set-exit').style.display = 'none';
-    if (kiosk.shutdown) $('set-off').onclick = function () { closeSettings(); kiosk.shutdown(); }; // the app asks to confirm
+    if (kiosk.screenOff) $('set-off').onclick = function () { closeSettings(); kiosk.screenOff(); }; // a touch wakes it
     else $('set-off').style.display = 'none';
+    if (kiosk.shutdown) $('set-power').onclick = function () { closeSettings(); kiosk.shutdown(); }; // the app asks to confirm
+    else $('set-power').style.display = 'none';
   }
 
   return kiosk ? { closeSheet: closeSettings } : {};
