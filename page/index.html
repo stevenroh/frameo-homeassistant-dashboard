@@ -129,7 +129,7 @@
   #wchip svg { flex-shrink: 0; }
   #wchip-icon { display: inline-flex; color: var(--sky-ink); }
 
-  #right { position: absolute; right: 0; top: 0; bottom: 0; width: 380px; border-radius: 28px 0 0 28px;
+  #right { position: absolute; right: 24px; top: 24px; bottom: 24px; width: 380px; border-radius: 32px;
     background: var(--surface-container-low); padding: 24px 24px 20px 28px; display: flex; flex-direction: column; }
   #right-head { display: flex; align-items: center; justify-content: space-between; }
   #right-head .title-m { font-size: 30px; color: var(--on-surface); font-weight: 500; letter-spacing: 0; }
@@ -163,7 +163,7 @@
     background: var(--btn); color: var(--on-btn); font-size: 17px; font-weight: 600; gap: 8px; }
   #todo-add:active { background: var(--primary-container); }
   /* music card: bottom left, up to the Today panel */
-  #mc-box { position: absolute; left: 0; bottom: 24px; right: 404px; padding: 16px 20px 16px 16px; border-radius: 32px;
+  #mc-box { position: absolute; left: 0; bottom: 24px; right: 420px; padding: 16px 20px 16px 16px; border-radius: 32px;
     background: var(--surface-container-low); }
   #mc-open { display: flex; align-items: center; gap: 16px; width: 100%; }
   #mc-art { width: 72px; height: 72px; border-radius: 18px; overflow: hidden; flex-shrink: 0; background: var(--secondary-container); color: #5b3f9a;
@@ -175,9 +175,10 @@
   #mc-artist, #mc-on { font-size: 15px; color: var(--on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #mc-on { color: var(--violet); }
   #mc-ctl { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
-  #mc-ctl .spacer { flex: 1; }
-  #mc-vol { height: 56px; border-radius: 28px; background: var(--surface-container-high); padding: 0 4px; display: flex; align-items: center; }
-  #mc-vol-v { width: 48px; text-align: center; font-size: 16px; font-weight: 500; }
+  #mc-volrow { flex: 1; min-width: 0; height: 56px; border-radius: 28px; background: var(--surface-container-high); padding: 0 14px 0 4px;
+    display: flex; align-items: center; gap: 6px; }
+  #mc-volrow .range { flex: 1; min-width: 0; }
+  #mc-vol-v { width: 44px; text-align: right; font-size: 16px; font-weight: 500; }
   #mc-ctl .mu-btn { width: 56px; height: 56px; border-radius: 28px; }
   #mc-ctl #mc-play { width: 80px; background: var(--violet); color: #ffffff; }
   html.night #mc-ctl #mc-play { color: #24124a; }
@@ -661,12 +662,12 @@
         <span id="mc-meta"><span id="mc-title"></span><span id="mc-artist"></span><span id="mc-on"></span></span>
       </button>
       <div id="mc-ctl">
-        <span id="mc-vol">
-          <button id="mc-vdown" class="icon-btn" aria-label="Baisser le volume"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"></path></svg></button>
+        <div id="mc-volrow">
+          <button id="mc-vdown" class="icon-btn" aria-label="Baisser le volume"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M16 12h4"></path></svg></button>
+          <input id="mc-vol-r" class="range" type="range" min="0" max="100" step="1" value="0" aria-label="Volume">
+          <button id="mc-vup" class="icon-btn" aria-label="Monter le volume"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M15.5 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path></svg></button>
           <span id="mc-vol-v"></span>
-          <button id="mc-vup" class="icon-btn" aria-label="Monter le volume"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"></path></svg></button>
-        </span>
-        <span class="spacer"></span>
+        </div>
         <button id="mc-prev" class="mu-btn" aria-label="Précédent"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 6l-9 6 9 6z"></path><rect x="5.5" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
         <button id="mc-play" class="mu-btn" aria-label="Lecture"></button>
         <button id="mc-next" class="mu-btn" aria-label="Suivant"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 6l9 6-9 6z"></path><rect x="16" y="6" width="2.5" height="12" rx="1"></rect></svg></button>

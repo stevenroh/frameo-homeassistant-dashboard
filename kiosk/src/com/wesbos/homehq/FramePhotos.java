@@ -7,9 +7,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.json.JSONArray;
 
 /**
@@ -30,9 +33,26 @@ final class FramePhotos {
     Collections.sort(found, new Comparator<File>() {
       @Override public int compare(File a, File b) { return Long.compare(b.lastModified(), a.lastModified()); }
     });
+    // A photo sent twice is saved twice under new names: keep the newest copy only.
+    Set<String> seen = new HashSet<>();
     JSONArray out = new JSONArray();
-    for (int i = 0; i < found.size() && i < MAX; i++) out.put(Uri.fromFile(found.get(i)).toString());
+    for (File f : found) {
+      if (out.length() >= MAX) break;
+      if (seen.add(signature(f))) out.put(Uri.fromFile(f).toString());
+    }
     return out.toString();
+  }
+
+  /** Size plus a hash of the first 4 KB: equal for copies of one photo, different for different photos. */
+  private static String signature(File f) {
+    byte[] b = new byte[4096];
+    int n = 0;
+    try (InputStream in = new FileInputStream(f)) {
+      n = Math.max(0, in.read(b));
+    } catch (IOException e) {
+      return f.getPath();
+    }
+    return f.length() + ":" + Arrays.hashCode(Arrays.copyOf(b, n));
   }
 
   private static void collect(File dir, List<File> out, int depth) {

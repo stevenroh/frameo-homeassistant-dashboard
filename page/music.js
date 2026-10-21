@@ -201,8 +201,8 @@ function musicTab(ctx) {
     var name = speakers.filter(function (m) { return m.id === speaker; })[0];
     setText(p + '-on', 'Sur ' + (name ? name.name : ''));
     setText(p + '-vol-v', v.volume == null ? '—' : v.volume + '%');
-    if (p === 'mu' && !volDrag) {
-      var r = $('mu-vol-r');
+    if (!volDrag) {
+      var r = $(p + '-vol-r');
       r.disabled = v.volume == null;
       if (+r.value !== (v.volume || 0)) { r.value = v.volume || 0; r.style.setProperty('--v', (v.volume || 0) + '%'); }
     }
@@ -291,16 +291,18 @@ function musicTab(ctx) {
       $(p + '-vdown').onclick = function () { vol(-1); };
       $(p + '-vup').onclick = function () { vol(1); };
     });
-    // The slider shows the value while dragging and sends one volume_set when the finger lifts.
-    $('mu-vol-r').addEventListener('input', function () {
-      var r = $('mu-vol-r');
-      volDrag = true;
-      r.style.setProperty('--v', r.value + '%');
-      setText('mu-vol-v', r.value + '%');
-    });
-    $('mu-vol-r').addEventListener('change', function () {
-      volDrag = false;
-      setVolume(+$('mu-vol-r').value / 100);
+    // The sliders (Music tab and Home card) show the value while dragging and send one volume_set when the finger lifts.
+    ['mu', 'mc'].forEach(function (p) {
+      var r = $(p + '-vol-r');
+      r.addEventListener('input', function () {
+        volDrag = true;
+        r.style.setProperty('--v', r.value + '%');
+        setText(p + '-vol-v', r.value + '%');
+      });
+      r.addEventListener('change', function () {
+        volDrag = false;
+        setVolume(+r.value / 100);
+      });
     });
     $('mc-open').onclick = function () { ctx.showView('music'); };
     $('mu-spk').onclick = function (e) {
