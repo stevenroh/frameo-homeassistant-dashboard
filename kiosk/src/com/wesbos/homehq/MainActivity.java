@@ -327,6 +327,7 @@ public class MainActivity extends Activity {
     @JavascriptInterface public void reset() { if (own()) runReset(); }
     /** Settings' Quitter: the same as the menu's launcher entry (on a Frameo, its home screen is usually Frameo). */
     @JavascriptInterface public void exit() { if (own()) runOnUiThread(MainActivity.this::openLauncher); }
+    @JavascriptInterface public void shutdown() { if (own()) runOnUiThread(MainActivity.this::confirmShutdown); }
   }
 
   private String savedUrl() {
@@ -612,6 +613,25 @@ public class MainActivity extends Activity {
         Log.w(TAG, "Backlight write failed: " + ex);
       }
     });
+  }
+
+  /** Settings' Éteindre: asks first, then powers the frame off through su (reboot -p). */
+  private void confirmShutdown() {
+    new AlertDialog.Builder(this)
+        .setTitle("Éteindre le cadre ?")
+        .setMessage("Pour le rallumer, utilisez le bouton marche/arrêt du cadre.")
+        .setPositiveButton("Éteindre", (d, w) -> ROOT.execute(() -> {
+          try {
+            Runtime.getRuntime().exec(new String[] {"su", "-c", "reboot -p"}).waitFor();
+          } catch (Exception ex) {
+            Log.w(TAG, "Shutdown failed: " + ex);
+          }
+          // Still running a moment later: su refused or reboot is missing.
+          handler.postDelayed(() -> toast("Impossible d’éteindre le cadre"), 5000);
+        }))
+        .setNegativeButton("Annuler", null)
+        .setOnDismissListener(d -> scheduleSleep())
+        .show();
   }
 
   /** One finger held still on the empty bottom of the rail for HOLD_MS opens the controls. */
