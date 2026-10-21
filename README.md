@@ -34,32 +34,59 @@ Flat colours, no shadows, ripples or animations, because the frame is a 1 GHz Co
 | Forecast | Now, six detail tiles (feels like, wind, gusts, humidity, rain, pressure), and the days after today |
 | Calendar | Month grid with a day sheet, or week columns |
 | Climate | Thermostat zones: current temperature, -/+ target, Off/Auto/Heat |
-| Lights | One card per room, one row per light: tap to toggle, hold for brightness and colour, All off |
+| Lights | One card per room, one row per light: tap to toggle, hold for brightness, colour temperature and colour swatches, All off |
 | Music | Now playing on an Alexa/media_player speaker, volume, previous/next, "play on" speaker, search that plays on Spotify |
 | Recipes | Search the Garfinho recipe library by name or ingredient, filter chips, favourites with a heart, and a recipe page with photo, tags and tickable ingredients |
+| Solar | Production, house, battery (charge %, charging or discharging) and grid (bought and sold today) from the inverter's sensors |
 | EV | Charger state and power, session/day/month kWh, price bars with your cap, charge mode, switches |
+| Photos | Full screen photos from the Frameo app's folder (sent with the Frameo phone app), shuffled, one a minute; two portraits share the screen; tap left/right for previous/next, the middle for Home |
 | Settings (gear) | Dashboard version, update address, Update now, Use built-in |
 
-Tabs whose entities are not in your config are hidden (EV, Music, Recipes), so you only get what you set up.
+Photos tab: the kiosk app reads `/sdcard/frameo_files/media`, where the Frameo app saves received photos. It asks
+for storage access once on the frame (or `adb shell pm grant com.wesbos.homehq android.permission.READ_EXTERNAL_STORAGE`).
+Optional `photos` (URLs or `/local/...` paths, added to the Frameo ones) and `photoSeconds` (default 60).
+
+Optional `background`: `"frameo"` for a random landscape from the Frameo app's photos, a photo instead of the drawn
+landscape, or a list of photos; it changes every 10 minutes.
+Put the files in Home Assistant's `/config/www/` folder and list them as `/local/<name>.jpg` (or give full URLs).
+Size them to 1280x800 JPEGs; the frame is slow to scale big photos. At night the photo is darkened.
+
+Tabs whose entities are not in your config are hidden (Climate, Lights, EV, Music, Recipes), so you only get what you set up.
 
 ## Configure
 
 Copy `secrets/config.example.json` to `secrets/config.json` (gitignored) and fill in:
 
-- `host`, `token`: your HA address (no scheme) and a long-lived token. Prefer a non-admin user's token: it is
+- `host`, `token`: your HA address and a long-lived token. A bare host (`xxx.ui.nabu.casa`) means https/wss; for a
+  LAN install give the scheme and port, e.g. `http://192.168.1.10:8123`. Prefer a non-admin user's token: it is
   readable by anyone with ADB on the frame.
-- `weather`, `waste`, `calendars`: entity ids. `waste` is a calendar of bin collections (shown as chips).
-- `todo`: a `todo.*` entity. `climate`: a list of climate entities.
-- `lights`: `{ "id", "name", "room" }` per light; lights with the same `room` share a card.
+- `gusts` (optional): a gust sensor, e.g. MeteoSwiss's `sensor.wind_gusts_peak_1s_at_…`, for the Rafales tile.
+- `weather`, `waste`, `calendars`: entity ids. `waste` (optional) is a calendar of bin collections (shown as chips).
+- `temperatures`: `[{ "id", "name", "humidity" }]` temperature sensors (humidity optional), shown as chips under the date
+  on Home and as cards on the Climate tab after any thermostats. The card's pictogram follows the room's name (salon,
+  chambre, cuisine, bureau, bain, enfant, garage, jardin…); `"icon"` forces one of `sofa`, `bed`, `kitchen`, `desk`,
+  `bath`, `kid`, `garage`, `pool`, `outdoor`, `thermo`. Light rooms get the same pictograms.
+- `todo`: a `todo.*` entity, or a list of them (ids, or `{ "id", "name" }` to rename one); several lists show as tabs on
+  the Home card, and Add and ticks go to the tab on screen. `climate`: a list of climate entities (`[]` or left out hides the tab).
+- `lights`: `{ "id", "name", "room" }` per light (a `switch.*` such as a smart plug works too); lights with the
+  same `room` share a card.
+- `solar`: inverter sensors for the Solar tab, each optional: `pv` and `pvToday` (production now / today), `forecastToday` (or `forecastRemaining`, added to
+  today's production), `forecastTomorrow`, `forecastDay2` (kWh) and `peakToday` (a timestamp) from a solar forecast, `load`
+  (house now), `battery` and `soc`, `chargeToday` and `dischargeToday` (battery kWh), `grid` (now), `importToday` and `exportToday`. A card shows when its sensors are set.
+  `invertBattery` / `invertGrid` flip an inverter that reports charging or buying as negative.
 - `ev`: ids for the charger, price sensor (a Nord Pool style sensor with a `today` list), cap, mode and switches.
 - `recipes`: `{ "favorites": "sensor.garfinho_favorite_recipes" }` for the Garfinho integration (its `garfinho.search`,
   `add_favorite` and `remove_favorite` services). The feed has titles, photos, tags and ingredient names, but no
   quantities or method.
 - `music`: `{ "speakers": [{ "id", "name" }] }` media players. Search sends `play_media` with `"<query> on Spotify"`,
-  which Alexa Media Player understands. Optional `library`: a SpotifyPlus media player, which adds Playlists, Recent,
+  which Alexa Media Player understands; `"search": false` hides the search box for other speakers or without Spotify. Optional `library`: a SpotifyPlus media player, which adds Playlists, Recent,
   Liked songs, Artists and Albums from your Spotify account; a tile plays on the selected speaker through Spotify Connect
   (`device` on a speaker overrides the Spotify device name, which defaults to the speaker's name in HA).
   Setup and quirks: [docs/spotifyplus.md](docs/spotifyplus.md).
+  Or `"assistant": "<config entry id>"` for Music Assistant: shelves of your MA radios, playlists, albums, artists
+  and tracks, and a search box that searches MA; a tile plays on the selected speaker with `music_assistant.play_media`
+  (the speakers must be MA players). To find the entry id: Developer tools, Actions, `music_assistant.get_library`, pick
+  your Music Assistant instance, then Go to YAML mode: it shows `config_entry_id`.
 
 ## Build and deploy
 
@@ -76,6 +103,17 @@ adb shell am start -n com.wesbos.homehq/.MainActivity
 Windows with WSL (Windows Android SDK and Android Studio JBR): `./build.sh`, then install `build/homehq.apk`
 with the Windows `adb.exe`.
 
+Quick deploy, on the computer the frame is plugged into, when the APK was built elsewhere (a Codespace) and
+downloaded: installs the newest `homehq*.apk` in Downloads (browsers save repeats as `homehq (1).apk`), starts it,
+then removes the downloaded copies so the next download keeps its name.
+
+```sh
+apk=$(ls -t ~/Downloads/homehq*.apk | head -1) &&
+adb install -r "$apk" &&
+adb shell am start -n com.wesbos.homehq/.MainActivity &&
+rm ~/Downloads/homehq*.apk
+```
+
 A URL saved with `--es url` overrides the bundled page. `pm clear com.wesbos.homehq` removes it.
 The token is inside the APK. Rotate it if the APK leaves your hands.
 
@@ -85,8 +123,8 @@ After the first APK install, page changes (new tabs, styling, config) do not nee
 
 1. Serve the files from any static host:
    - quick: `./serve.sh` on your computer (port 8099); add `--no-config` to keep your token off it;
-   - permanent: run `deploy/create-lxc.sh <key> <ip> <gateway>` on a Proxmox host (a 128 MB Alpine container
-     with Caddy), then `./publish.sh root@<ip>` from any machine.
+   - permanent: an always-on Linux box with Caddy (setup in [docs/update-server.md](docs/update-server.md)),
+     then `./publish.sh user@<ip>` from any machine.
 2. Tell the frame where to fetch from, once:
    `adb shell am start -n com.wesbos.homehq/.MainActivity --es update_url http://<host>:8099`
 3. On the frame: Settings (gear at the bottom of the rail), Update now. Or the two-finger menu, Update dashboard.
@@ -130,7 +168,7 @@ Adding an item needs an on-screen keyboard on the frame; without one, add items 
   offline screen, debugging, navigation bar, updates).
 - [docs/home-assistant.md](docs/home-assistant.md): websocket protocol, dates and offsets, and the integrations.
 - [docs/spotifyplus.md](docs/spotifyplus.md): Spotify search and library on the Music tab.
-- [docs/update-server.md](docs/update-server.md): the update file server (serve.sh, a Proxmox LXC, or your own host).
+- [docs/update-server.md](docs/update-server.md): the update file server (serve.sh, an always-on Linux box, or your own host).
 
 ## Licence
 

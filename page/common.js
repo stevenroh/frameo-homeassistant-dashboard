@@ -2,26 +2,29 @@
 // Shared by every tab: dates, icons, entity diffs, the websocket protocol, timing. Pure functions only.
 // index.html loads this file first, the tab files next and app.js last; plain scripts, so they share one scope.
 
-var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
-  'September', 'October', 'November', 'December'];
+var DAYS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+var MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août',
+  'septembre', 'octobre', 'novembre', 'décembre'];
+// Juin and juillet share their first three letters, so short months are spelled out.
+var MONTHS_SHORT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 var CONDITIONS = {
-  'clear-night': ['Clear', '☾'],
-  cloudy: ['Cloudy', '☁'],
-  exceptional: ['Exceptional', '!'],
-  fog: ['Fog', '≋'],
-  hail: ['Hail', '❄'],
-  lightning: ['Lightning', '⚡'],
-  'lightning-rainy': ['Thunderstorm', '⚡'],
-  partlycloudy: ['Partly cloudy', '⛅'],
-  pouring: ['Pouring rain', '☂'],
-  rainy: ['Rain', '☂'],
-  snowy: ['Snow', '❄'],
-  'snowy-rainy': ['Sleet', '❄'],
-  sunny: ['Sunny', '☀'],
-  windy: ['Windy', '≈'],
-  'windy-variant': ['Windy', '≈'],
+  'clear-night': ['Dégagé', '☾'],
+  cloudy: ['Nuageux', '☁'],
+  exceptional: ['Exceptionnel', '!'],
+  fog: ['Brouillard', '≋'],
+  hail: ['Grêle', '❄'],
+  lightning: ['Éclairs', '⚡'],
+  'lightning-rainy': ['Orage', '⚡'],
+  partlycloudy: ['Peu nuageux', '⛅'],
+  pouring: ['Averses', '☂'],
+  rainy: ['Pluie', '☂'],
+  snowy: ['Neige', '❄'],
+  'snowy-rainy': ['Neige fondue', '❄'],
+  sunny: ['Ensoleillé', '☀'],
+  windy: ['Venteux', '≈'],
+  'windy-variant': ['Venteux', '≈'],
 };
 
 // Icon colours that read on both the day and night cards; clouds follow the text colour.
@@ -95,13 +98,13 @@ function formatDate(d) {
 }
 
 function shortDate(d) {
-  return DAYS[d.getDay()].slice(0, 3) + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()].slice(0, 3);
+  return DAYS[d.getDay()].slice(0, 3) + ' ' + d.getDate() + ' ' + MONTHS_SHORT[d.getMonth()];
 }
 
 function dayLabel(d, now) {
   var diff = dayDiff(d, now);
-  if (diff === 0) return 'Today';
-  if (diff === 1) return 'Tomorrow';
+  if (diff === 0) return 'Aujourd’hui';
+  if (diff === 1) return 'Demain';
   return shortDate(d);
 }
 
@@ -165,9 +168,9 @@ function keepAlivePong() { return newKeepAlive(); }
 function backoffDelay(attempt) { return Math.min(60000, 1000 * Math.pow(2, attempt)); }
 
 function staleLabel(lastOk, now) {
-  if (!lastOk) return 'Connecting…';
+  if (!lastOk) return 'Connexion…';
   var mins = Math.floor((now - lastOk) / 60000);
-  return mins >= 2 ? 'No connection for ' + mins + ' min' : '';
+  return mins >= 2 ? 'Pas de connexion depuis ' + mins + ' min' : '';
 }
 
 // --- websocket protocol, as a reducer so it can be tested without a socket ---
@@ -191,7 +194,7 @@ function call(state, kind, cfg) {
   if (kind === 'todo') {
     return {
       id: id, type: 'call_service', domain: 'todo', service: 'get_items',
-      target: { entity_id: cfg.todo }, service_data: { status: 'needs_action' }, return_response: true,
+      target: { entity_id: todoIds(cfg) }, service_data: { status: 'needs_action' }, return_response: true,
     };
   }
   return {
@@ -203,6 +206,15 @@ function call(state, kind, cfg) {
 function refresh(state, cfg, kind) {
   return { state: state, send: [call(state, kind, cfg)] };
 }
+
+// HA's base address from cfg.host: "xxx.ui.nabu.casa" means https; a LAN install gives the scheme and port,
+// e.g. "http://192.168.1.10:8123". The websocket uses the matching ws/wss scheme.
+function haBase(host) { return (/^https?:\/\//.test(host) ? host : 'https://' + host).replace(/\/+$/, ''); }
+// cfg.background (one URL or a list) -> full photo URLs; "/local/x.jpg" is a file in HA's /config/www.
+function photoUrls(cfg) {
+  return [].concat(cfg.background || []).map(function (u) { return u.charAt(0) === '/' ? haBase(cfg.host) + u : u; });
+}
+function haSocketUrl(host) { return haBase(host).replace(/^http/, 'ws') + '/api/websocket'; }
 
 // A user action (light toggle, thermostat change). The new state arrives through the subscription;
 // only a failure comes back as an update.
@@ -225,13 +237,13 @@ function handleMessage(state, msg, cfg) {
     state.fatal = msg.message || 'auth_invalid';
   } else if (msg.type === 'auth_ok') {
     state.subId = state.nextId++;
-    var ids = [cfg.weather, 'sun.sun'].concat(cfg.climate || [], (cfg.lights || []).map(function (l) { return l.id; }),
-      cfg.todo ? [cfg.todo] : [], evIds(cfg.ev), (cfg.music && cfg.music.speakers || []).map(function (m) { return m.id; }),
+    var ids = [cfg.weather, 'sun.sun'].concat(cfg.gusts ? [cfg.gusts] : [], cfg.climate || [], (cfg.lights || []).map(function (l) { return l.id; }),
+      todoIds(cfg), evIds(cfg.ev), solarIds(cfg.solar), (cfg.temperatures || []).reduce(function (a, t) { return a.concat(t.humidity ? [t.id, t.humidity] : [t.id]); }, []), (cfg.music && cfg.music.speakers || []).map(function (m) { return m.id; }),
       cfg.recipes && cfg.recipes.favorites ? [cfg.recipes.favorites] : []);
     send.push({ id: state.subId, type: 'subscribe_entities', entity_ids: ids });
     send.push(call(state, 'calendar', cfg));
     send.push(call(state, 'forecast', cfg));
-    if (cfg.todo) send.push(call(state, 'todo', cfg));
+    if (todoIds(cfg).length) send.push(call(state, 'todo', cfg));
   } else if (msg.type === 'event' && msg.id === state.subId) {
     update = { kind: 'entities', event: msg.event };
   } else if (msg.type === 'result' && state.pending[msg.id]) {
@@ -242,7 +254,7 @@ function handleMessage(state, msg, cfg) {
         update = { kind: 'action-failed', entity: p.entity, message: (msg.error && msg.error.message) || 'failed' };
       }
     } else if (p.kind === 'browse') {
-      update = { kind: 'browse', shelf: p.shelf, items: msg.success ? parseBrowse(msg.result) : null };
+      update = { kind: 'browse', shelf: p.shelf, items: msg.success ? (p.ma ? parseMa(msg.result) : parseBrowse(msg.result)) : null };
     } else if (p.kind === 'recipe-content') {
       update = { kind: 'recipe-content', rid: p.rid, content: msg.success ? parseRecipeHtml(msg.result && msg.result.html) : null };
     } else if (p.kind === 'recipes') {
@@ -250,7 +262,7 @@ function handleMessage(state, msg, cfg) {
     } else if (msg.success) {
       if (p.kind === 'range') update = { kind: 'range', key: p.key, events: parseEvents(msg.result) };
       else if (p === 'calendar') update = { kind: 'calendar', events: parseEvents(msg.result) };
-      else if (p === 'todo') update = { kind: 'todo', items: parseTodos(msg.result, cfg.todo) };
+      else if (p === 'todo') update = { kind: 'todo', lists: todoIds(cfg).reduce(function (o, id) { o[id] = parseTodos(msg.result, id); return o; }, {}) };
       else update = { kind: 'forecast', days: parseForecast(msg.result, cfg.weather, 6) };
     }
   }

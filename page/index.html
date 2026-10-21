@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="day">
+<html lang="fr" class="day">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=1280, height=800, user-scalable=no">
@@ -53,6 +53,9 @@
   html.night #halo { display: block; left: 400px; top: 70px; width: 340px; height: 340px; border-radius: 170px; background: #1a2442; }
   #halo { display: none; }
   html.night .star { display: block; background: #c9d3ea; border-radius: 2px; }
+  #bg.photo { background-size: cover; background-position: center; }
+  #bg.photo span { display: none; }
+  html.night #bg.photo::after { content: ''; position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.45); }
 
   /* buttons and chips */
   .tonal { display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 22px; border-radius: 24px;
@@ -76,16 +79,50 @@
   #app { position: absolute; left: 0; top: 0; width: 1280px; height: 800px; }
 
   /* floating navigation rail */
-  #rail { position: absolute; left: 20px; top: 50%; margin-top: -228px; width: 64px; padding: 8px 0; border-radius: 32px;
+  #rail { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); width: 64px; padding: 8px 0; border-radius: 32px;
     background: var(--surface-container-low); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2; }
   .rail-btn { width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: var(--on-surface-variant); }
   .rail-btn.on { background: var(--secondary-container); color: var(--on-secondary-container); }
   .view { position: absolute; left: 108px; top: 0; right: 0; bottom: 0; }
+  /* solar: up to four cards, two per row; hidden cards leave the space to the others */
+  #so-wrap { position: absolute; left: 0; top: 24px; right: 24px; bottom: 24px; display: grid; grid-template-columns: 1fr 1fr;
+    grid-auto-rows: minmax(0, 1fr); gap: 16px; }
+  .so-card { border-radius: 32px; background: var(--surface-container-low); padding: 24px 28px; display: flex; flex-direction: column; min-height: 0; }
+  .so-head { display: flex; align-items: center; gap: 14px; }
+  .so-ic { width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; }
+  .so-ic.peach { background: #ffd6bf; color: #8a4a2a; } .so-ic.lav { background: #e6dcff; color: #5b3f9a; }
+  .so-ic.mint { background: #c9ecd4; color: #2f6b40; } .so-ic.sky { background: #cfe2ff; color: #2c5aa0; }
+  .so-body { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+  .so-big { display: flex; align-items: baseline; gap: 8px; }
+  .so-n { font-size: 76px; font-weight: 300; line-height: 1; letter-spacing: -3px; }
+  .so-u { font-size: 26px; color: var(--on-surface-variant); }
+  .so-sub { font-size: 18px; color: var(--on-surface-variant); margin-top: 10px; }
+  .so-bar { height: 18px; border-radius: 9px; background: var(--surface-container-highest); margin-top: 16px; overflow: hidden; }
+  .so-bar i { display: block; height: 100%; background: var(--mint-ink); }
+  .so-bar.sun i { background: var(--primary); }
+  .so-tiles { display: flex; gap: 12px; margin-top: 16px; }
+  .so-tiles .det { flex: 1; height: 92px; }
+  .so-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .so-state { height: 40px; padding: 0 16px; border-radius: 20px; background: var(--surface-container-high); font-size: 16px; font-weight: 600;
+    display: inline-flex; align-items: center; white-space: nowrap; }
+  .so-state.on { background: var(--mint); color: var(--on-mint); }
+  /* photos: the whole screen, over the rail; tap the middle to go home */
+  #view-photos { left: 0; z-index: 3; background: #000; }
+  #ph-a, #ph-b { position: absolute; left: 0; top: 0; width: 1280px; height: 800px; object-fit: cover; }
+  #ph-b, #ph-a:not([src]) { display: none; }
+  #view-photos.pair #ph-a { width: 637px; }
+  #view-photos.pair #ph-b { display: block; left: 643px; width: 637px; }
+  #ph-empty { position: absolute; left: 240px; right: 240px; top: 360px; text-align: center; color: #ddd; font-size: 20px; line-height: 30px; }
 
   /* home */
   #clockcard { position: absolute; left: 0; top: 24px; padding: 16px 28px 18px; border-radius: 32px; background: var(--surface-container-low); }
   #clock { font-size: 112px; line-height: 0.95; font-weight: 300; letter-spacing: -4px; color: var(--primary); }
   #datebar { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
+  #rooms { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .room-t { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px 0 10px; border-radius: 18px;
+    background: var(--peach); font-size: 16px; color: var(--on-surface); }
+  .room-t svg { color: var(--primary); }
+  .room-t b { font-weight: 600; }
   #date { font-size: 18px; }
   #wchip { height: 40px; padding: 0 10px 0 10px; border-radius: 20px; background: var(--sky); color: var(--on-sky);
     display: inline-flex; align-items: center; gap: 6px; font-size: 16px; }
@@ -110,7 +147,10 @@
   #todo-box { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-top: 18px; }
   #todo-head { display: flex; align-items: center; justify-content: space-between; }
   #todo-head .title-m { font-size: 22px; color: var(--on-surface); font-weight: 500; letter-spacing: 0; }
-  #todo-count { font-size: 14px; color: var(--on-surface-variant); }
+  #todo-count { font-size: 14px; color: var(--on-surface-variant); flex-shrink: 0; margin-left: 8px; }
+  #todo-tabs { min-width: 0; overflow-x: auto; }
+  #todo-tabs .seg { padding: 0 14px; white-space: nowrap; }
+  #todo-tabs .seg b { font-weight: 700; margin-left: 2px; }
   #todo-list { flex: 1; min-height: 0; overflow-y: auto; margin-top: 2px; }
   .todo { display: flex; align-items: center; gap: 12px; min-height: 48px; }
   .todo-box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--outline); flex-shrink: 0; }
@@ -118,11 +158,12 @@
   .todo-title { flex: 1; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .todo-due { font-size: 14px; color: var(--on-surface-variant); flex-shrink: 0; }
   .todo-due.overdue { color: var(--error); }
-  #todo-add { position: absolute; right: 404px; bottom: 24px; height: 72px; padding: 0 24px 0 20px; border-radius: 22px;
-    background: var(--btn); color: var(--on-btn); font-size: 17px; font-weight: 600; gap: 10px; }
+  /* Add sits under the task list it adds to */
+  #todo-add { flex-shrink: 0; height: 52px; margin-top: 10px; border-radius: 26px; justify-content: center;
+    background: var(--btn); color: var(--on-btn); font-size: 17px; font-weight: 600; gap: 8px; }
   #todo-add:active { background: var(--primary-container); }
-  /* music card: bottom left, clear of the Add to-do button (x 590-768) */
-  #mc-box { position: absolute; left: 0; bottom: 24px; width: 548px; padding: 16px 20px 16px 16px; border-radius: 32px;
+  /* music card: bottom left, up to the Today panel */
+  #mc-box { position: absolute; left: 0; bottom: 24px; right: 404px; padding: 16px 20px 16px 16px; border-radius: 32px;
     background: var(--surface-container-low); }
   #mc-open { display: flex; align-items: center; gap: 16px; width: 100%; }
   #mc-art { width: 72px; height: 72px; border-radius: 18px; overflow: hidden; flex-shrink: 0; background: var(--secondary-container); color: #5b3f9a;
@@ -205,7 +246,7 @@
   .day.today .wind { color: #6b5e52; }
 
   /* calendar */
-  #cal-main { position: absolute; left: 0; top: 24px; bottom: 24px; right: 392px; width: auto; border-radius: 32px;
+  #cal-main { position: absolute; left: 0; top: 24px; bottom: 24px; right: 408px; width: auto; border-radius: 32px;
     background: var(--surface-container-low); padding: 18px 20px; display: flex; flex-direction: column; }
   #cal-head { display: flex; align-items: center; gap: 6px; }
   #cal-title { font-size: 32px; font-weight: 500; flex: 1; padding-left: 6px; }
@@ -269,6 +310,15 @@
     grid-auto-rows: minmax(0, 1fr); gap: 16px; }
   .clim { display: flex; flex-direction: column; padding: 22px 26px; border-radius: 32px; background: var(--surface-container-low); min-height: 0; }
   .clim.unavail { opacity: 0.5; }
+  #climate-grid.sensors-only { grid-auto-rows: 210px; }
+  .clim.sensor { align-self: start; height: 210px; }
+  .cs-head { display: flex; align-items: center; gap: 16px; }
+  .cs-ic { width: 60px; height: 60px; border-radius: 30px; background: var(--peach); color: var(--primary); display: flex;
+    align-items: center; justify-content: center; flex-shrink: 0; }
+  .cs-body { display: flex; align-items: flex-end; justify-content: space-between; margin-top: auto; }
+  .cs-t { font-size: 84px; font-weight: 300; line-height: 0.9; letter-spacing: -3px; color: var(--primary); }
+  .cs-h { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px 0 12px; border-radius: 20px;
+    background: var(--sky); color: var(--on-sky); font-size: 18px; font-weight: 600; }
   .clim-head { display: flex; align-items: center; justify-content: space-between; }
   .clim-name { font-size: 28px; font-weight: 500; }
   .clim-act { height: 34px; padding: 0 14px; border-radius: 17px; font-size: 15px; font-weight: 600; background: var(--surface-container-high); }
@@ -287,9 +337,13 @@
   .clim-tv { font-size: 34px; font-weight: 500; }
   .clim .segs { align-self: flex-start; }
   #lights-grid { position: absolute; left: 0; top: 104px; right: 24px; bottom: 24px; overflow-y: auto; display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+    grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; align-items: start; gap: 14px; }
+  /* each room only as tall as its lights, like the climate cards */
   .room { border-radius: 28px; background: var(--surface-container-low); padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
-  .room-head { display: flex; align-items: center; justify-content: space-between; padding: 0 6px; }
+  .room-head { display: flex; align-items: center; gap: 10px; padding: 0 6px 0 0; }
+  .room-head .room-count { margin-left: auto; }
+  .room-ic { width: 40px; height: 40px; border-radius: 20px; background: var(--peach); color: var(--primary); display: flex;
+    align-items: center; justify-content: center; flex-shrink: 0; }
   .room-name { font-size: 20px; font-weight: 500; }
   .room-count { font-size: 14px; color: var(--on-surface-variant); }
   .lt { position: relative; height: 64px; flex-shrink: 0; border-radius: 20px; background: var(--surface-container-high); overflow: hidden;
@@ -405,9 +459,11 @@
   #mu-bar { display: block; height: 8px; border-radius: 4px; background: var(--surface-container-highest); margin-top: 30px; }
   #mu-fill { display: block; width: 0; height: 8px; border-radius: 4px; background: var(--violet); }
   #mu-times { display: flex; justify-content: space-between; font-size: 14px; color: var(--on-surface-variant); margin-top: 6px; }
-  #mu-ctl { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
-  #mu-vol { height: 64px; border-radius: 32px; background: var(--surface-container-high); padding: 0 8px; display: flex; align-items: center; gap: 4px; }
-  #mu-vol-v { width: 52px; text-align: center; font-size: 17px; font-weight: 500; }
+  #mu-ctl { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 18px; }
+  #mu-volrow { display: flex; align-items: center; gap: 8px; height: 64px; margin-top: 20px; padding: 0 16px 0 8px; border-radius: 32px;
+    background: var(--surface-container-high); }
+  #mu-volrow .range { flex: 1; min-width: 0; }
+  #mu-vol-v { width: 48px; text-align: right; font-size: 17px; font-weight: 500; }
   .mu-btn { width: 64px; height: 64px; border-radius: 32px; background: var(--surface-container-high); color: var(--on-surface); display: flex; align-items: center; justify-content: center; }
   #mu-play { width: 96px; height: 80px; border-radius: 28px; background: var(--violet); color: #ffffff; }
   html.night #mu-play { color: #24124a; }
@@ -506,6 +562,9 @@
   .range:disabled::-webkit-slider-runnable-track { background: var(--surface-container-highest); }
   .range:disabled::-webkit-slider-thumb { background: var(--outline); }
   .sheet-foot { display: flex; justify-content: flex-end; margin-top: 24px; }
+  .swatches { display: flex; gap: 14px; padding: 4px; }
+  .swatch { width: 52px; height: 52px; border-radius: 26px; border: 0; flex-shrink: 0; }
+  .swatch.on { outline: 3px solid var(--on-surface); outline-offset: 3px; }
 
   #toast { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 14px 24px; border-radius: 16px;
     background: var(--on-surface); color: var(--surface-container-low); font-size: 16px; z-index: 5; }
@@ -533,32 +592,38 @@
   <span id="hill2"></span>
 </div>
 <div id="app">
-  <nav id="rail" aria-label="Views">
-    <button id="nav-home" class="rail-btn on" aria-label="Home">
+  <nav id="rail" aria-label="Vues">
+    <button id="nav-home" class="rail-btn on" aria-label="Accueil">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5M5 9.5V20h14V9.5M10 20v-6h4v6"></path></svg>
     </button>
-    <button id="nav-forecast" class="rail-btn" aria-label="Forecast">
+    <button id="nav-photos" class="rail-btn" aria-label="Photos">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><circle cx="9" cy="9.5" r="1.6"></circle><path d="M20.5 15.5l-5-5-9.5 9"></path></svg>
+    </button>
+    <button id="nav-forecast" class="rail-btn" aria-label="Prévisions">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 3.5v1.2M3.6 8.6h1.2M5 5.1l.9.9M12.1 5.1l-.9.9M5.6 10.9A3.6 3.6 0 0 1 11.7 7.4M9 20h8.5a3.5 3.5 0 0 0 .5-6.96A5 5 0 0 0 8.4 13.6 3.2 3.2 0 0 0 9 20z"></path></svg>
     </button>
-    <button id="nav-cal" class="rail-btn" aria-label="Calendar">
+    <button id="nav-cal" class="rail-btn" aria-label="Calendrier">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5a2.5 2.5 0 0 1 2.5-2.5h12a2.5 2.5 0 0 1 2.5 2.5v10.5a2.5 2.5 0 0 1-2.5 2.5H6a2.5 2.5 0 0 1-2.5-2.5zM3.5 10h17M8 3v4M16 3v4"></path></svg>
     </button>
-    <button id="nav-climate" class="rail-btn" aria-label="Climate">
+    <button id="nav-climate" class="rail-btn" aria-label="Climat">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0zM12 17.5V11"></path></svg>
     </button>
-    <button id="nav-lights" class="rail-btn" aria-label="Lights">
+    <button id="nav-lights" class="rail-btn" aria-label="Lumières">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"></path></svg>
     </button>
-    <button id="nav-music" class="rail-btn" aria-label="Music">
+    <button id="nav-music" class="rail-btn" aria-label="Musique">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>
     </button>
-    <button id="nav-ev" class="rail-btn" aria-label="EV charging">
+    <button id="nav-solar" class="rail-btn" aria-label="Solaire">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"></path></svg>
+    </button>
+    <button id="nav-ev" class="rail-btn" aria-label="Recharge VE">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 6 13.5h5.5L10 21l8-11.5h-5.5z"></path></svg>
     </button>
-    <button id="nav-recipes" class="rail-btn" aria-label="Recipes">
+    <button id="nav-recipes" class="rail-btn" aria-label="Recettes">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17 21V3c-2.2 1-3.5 3.6-3.5 7v3H17"></path></svg>
     </button>
-    <button id="nav-set" class="rail-btn" aria-label="Settings" style="display:none">
+    <button id="nav-set" class="rail-btn" aria-label="Réglages" style="display:none">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
     </button>
   </nav>
@@ -568,58 +633,59 @@
       <div id="clock">--:--</div>
       <div id="datebar">
         <span id="date"></span>
-        <button id="wchip" aria-label="Open forecast"><span id="wchip-icon"></span><span id="wchip-text"></span>
+        <button id="wchip" aria-label="Ouvrir les prévisions"><span id="wchip-icon"></span><span id="wchip-text"></span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
         </button>
       </div>
+      <div id="rooms"></div>
     </section>
-    <section id="right" aria-label="Today">
+    <section id="right" aria-label="Aujourd’hui">
       <div id="right-head">
-        <div class="title-m">Today</div>
-        <button id="open-cal" class="tonal">Calendar
+        <div class="title-m">Aujourd’hui</div>
+        <button id="open-cal" class="tonal">Calendrier
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
         </button>
       </div>
       <div id="agenda"></div>
       <div id="bins"></div>
       <div id="todo-box">
-        <div id="todo-head"><div class="title-m">To do</div><span id="todo-count"></span></div>
+        <div id="todo-head"><div class="title-m" id="todo-title">À faire</div><div id="todo-tabs" class="segs" style="display:none"></div><span id="todo-count"></span></div>
         <div id="todo-list"></div>
+      <button id="todo-add" class="tonal">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"></path></svg>Ajouter</button>
       </div>
     </section>
-    <button id="todo-add" class="tonal">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"></path></svg>Add to-do</button>
-    <section id="mc-box" aria-label="Music">
+    <section id="mc-box" aria-label="Musique">
       <button id="mc-open">
         <span id="mc-art"></span>
         <span id="mc-meta"><span id="mc-title"></span><span id="mc-artist"></span><span id="mc-on"></span></span>
       </button>
       <div id="mc-ctl">
         <span id="mc-vol">
-          <button id="mc-vdown" class="icon-btn" aria-label="Volume down"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"></path></svg></button>
+          <button id="mc-vdown" class="icon-btn" aria-label="Baisser le volume"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"></path></svg></button>
           <span id="mc-vol-v"></span>
-          <button id="mc-vup" class="icon-btn" aria-label="Volume up"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"></path></svg></button>
+          <button id="mc-vup" class="icon-btn" aria-label="Monter le volume"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"></path></svg></button>
         </span>
         <span class="spacer"></span>
-        <button id="mc-prev" class="mu-btn" aria-label="Previous"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 6l-9 6 9 6z"></path><rect x="5.5" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
-        <button id="mc-play" class="mu-btn" aria-label="Play"></button>
-        <button id="mc-next" class="mu-btn" aria-label="Next"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 6l9 6-9 6z"></path><rect x="16" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
+        <button id="mc-prev" class="mu-btn" aria-label="Précédent"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 6l-9 6 9 6z"></path><rect x="5.5" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
+        <button id="mc-play" class="mu-btn" aria-label="Lecture"></button>
+        <button id="mc-next" class="mu-btn" aria-label="Suivant"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 6l9 6-9 6z"></path><rect x="16" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
       </div>
     </section>
   </div>
 
   <div id="view-forecast" class="view" style="display:none">
     <section id="fc-now">
-      <div id="fc-now-head"><span class="big-title">Now</span><span id="fc-src" class="sub"></span></div>
+      <div id="fc-now-head"><span class="big-title">Maintenant</span><span id="fc-src" class="sub"></span></div>
       <div id="fc-now-body">
         <span id="fc-blob"></span>
         <span><div id="fc-temp"></div><div id="fc-cond"></div></span>
       </div>
       <div id="fc-today"></div>
     </section>
-    <section id="fc-details" aria-label="Details"></section>
-    <section id="fc-days" aria-label="Next days">
-      <div id="fc-days-head"><span class="big-title">Next days</span><span class="sub">Day by day</span></div>
+    <section id="fc-details" aria-label="Détails"></section>
+    <section id="fc-days" aria-label="Prévisions">
+      <div id="fc-days-head"><span class="big-title">Prévisions</span><span class="sub">Jour par jour</span></div>
       <div id="fc-list"></div>
     </section>
   </div>
@@ -628,22 +694,22 @@
     <section id="cal-main">
       <div id="cal-head">
         <div id="cal-title"></div>
-        <button id="cal-prev" class="icon-btn" aria-label="Previous">
+        <button id="cal-prev" class="icon-btn" aria-label="Précédent">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
         </button>
-        <button id="cal-today" class="outlined">Today</button>
-        <button id="cal-next" class="icon-btn" aria-label="Next">
+        <button id="cal-today" class="outlined">Aujourd’hui</button>
+        <button id="cal-next" class="icon-btn" aria-label="Suivant">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
         </button>
         <div id="modes" class="segs">
-          <button id="mode-month" class="seg on"><span class="chk"></span>Month</button>
-          <button id="mode-week" class="seg"><span class="chk"></span>Week</button>
+          <button id="mode-month" class="seg on"><span class="chk"></span>Mois</button>
+          <button id="mode-week" class="seg"><span class="chk"></span>Semaine</button>
         </div>
       </div>
-      <div id="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
+      <div id="dow"><div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div></div>
       <div id="cal-grid" class="month rows5"></div>
     </section>
-    <aside id="cal-side" aria-label="Selected day">
+    <aside id="cal-side" aria-label="Jour sélectionné">
       <div id="side-label" class="side-label"></div>
       <div id="side-date"></div>
       <div id="side-bin"></div>
@@ -652,49 +718,49 @@
   </div>
 
   <div id="view-climate" class="view" style="display:none">
-    <div class="pill-head"><div class="pill"><span class="big-title">Climate</span><span id="climate-sub" class="sub"></span></div></div>
+    <div class="pill-head"><div class="pill"><span class="big-title">Climat</span><span id="climate-sub" class="sub"></span></div></div>
     <div id="climate-grid"></div>
   </div>
 
   <div id="view-lights" class="view" style="display:none">
     <div class="pill-head">
-      <div class="pill"><span class="big-title">Lights</span><span id="lights-sub" class="sub">Hold a light for brightness and colour</span></div>
+      <div class="pill"><span class="big-title">Lumières</span><span id="lights-sub" class="sub"></span></div>
       <span class="pill-spacer"></span>
       <button id="all-off" class="tonal">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8M7.5 6.5a7 7 0 1 0 9 0"></path></svg>All off</button>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8M7.5 6.5a7 7 0 1 0 9 0"></path></svg>Tout éteindre</button>
     </div>
     <div id="lights-grid"></div>
   </div>
 
   <div id="view-music" class="view" style="display:none">
-    <section id="mu-now" aria-label="Now playing">
+    <section id="mu-now" aria-label="En lecture">
       <div id="mu-top">
         <span id="mu-art"></span>
-        <span id="mu-meta"><span class="eyebrow" id="mu-eyebrow">NOW PLAYING</span><span id="mu-title"></span><span id="mu-artist"></span>
+        <span id="mu-meta"><span class="eyebrow" id="mu-eyebrow">EN LECTURE</span><span id="mu-title"></span><span id="mu-artist"></span>
           <span id="mu-on"></span></span>
       </div>
       <span id="mu-bar"><span id="mu-fill"></span></span>
       <div id="mu-times"><span id="mu-pos"></span><span id="mu-dur"></span></div>
       <div id="mu-ctl">
-        <span id="mu-vol">
-          <button id="mu-vdown" class="icon-btn" aria-label="Volume down"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"></path></svg></button>
-          <span id="mu-vol-v"></span>
-          <button id="mu-vup" class="icon-btn" aria-label="Volume up"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"></path></svg></button>
-        </span>
-        <span style="flex:1"></span>
-        <button id="mu-prev" class="mu-btn" aria-label="Previous"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 6l-9 6 9 6z"></path><rect x="5.5" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
-        <button id="mu-play" class="mu-btn" aria-label="Play"></button>
-        <button id="mu-next" class="mu-btn" aria-label="Next"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 6l9 6-9 6z"></path><rect x="16" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
+        <button id="mu-prev" class="mu-btn" aria-label="Précédent"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 6l-9 6 9 6z"></path><rect x="5.5" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
+        <button id="mu-play" class="mu-btn" aria-label="Lecture"></button>
+        <button id="mu-next" class="mu-btn" aria-label="Suivant"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 6l9 6-9 6z"></path><rect x="16" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
       </div>
-      <span class="eyebrow" style="margin-top:auto">PLAY ON</span>
+      <div id="mu-volrow">
+        <button id="mu-vdown" class="icon-btn" aria-label="Baisser le volume"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M16 12h4"></path></svg></button>
+        <input id="mu-vol-r" class="range" type="range" min="0" max="100" step="1" value="0" aria-label="Volume">
+        <button id="mu-vup" class="icon-btn" aria-label="Monter le volume"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M15.5 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path></svg></button>
+        <span id="mu-vol-v"></span>
+      </div>
+      <span class="eyebrow" style="margin-top:auto">LIRE SUR</span>
       <div id="mu-spk"></div>
     </section>
-    <section id="mu-find" aria-label="Find music">
-      <div id="mu-searchrow"><input id="mu-q" type="text" placeholder="Song, artist or playlist" autocomplete="off" maxlength="80" aria-label="Search music"><button id="mu-go">Play</button></div>
-      <span id="mu-hint">Alexa searches Spotify and plays the best match.</span>
+    <section id="mu-find" aria-label="Chercher de la musique">
+      <div id="mu-searchrow"><input id="mu-q" type="text" placeholder="Titre, artiste ou playlist" autocomplete="off" maxlength="80" aria-label="Chercher de la musique"><button id="mu-go">Lire</button></div>
+      <span id="mu-hint">Alexa cherche sur Spotify et lit le meilleur résultat.</span>
       <div id="mu-shelves"></div>
       <div id="mu-lib"></div>
-      <span class="eyebrow" id="mu-recent-l">RECENT</span>
+      <span class="eyebrow" id="mu-recent-l">RÉCENTS</span>
       <div id="mu-recent"></div>
     </section>
   </div>
@@ -702,83 +768,99 @@
   <div id="view-recipes" class="view" style="display:none">
     <div id="rc-browse">
       <div id="rc-top">
-        <span id="rc-searchrow"><input id="rc-q" type="text" placeholder="Search recipes by name or ingredient" autocomplete="off" maxlength="60" aria-label="Search recipes"><button id="rc-go" class="tonal">Search</button></span>
-        <span class="segs"><button id="rc-tab-all" class="seg on">All recipes</button><button id="rc-tab-fav" class="seg">Favourites <span id="rc-fav-n"></span></button></span>
+        <span id="rc-searchrow"><input id="rc-q" type="text" placeholder="Chercher une recette par nom ou ingrédient" autocomplete="off" maxlength="60" aria-label="Chercher une recette"><button id="rc-go" class="tonal">Chercher</button></span>
+        <span class="segs"><button id="rc-tab-all" class="seg on">Toutes les recettes</button><button id="rc-tab-fav" class="seg">Favoris <span id="rc-fav-n"></span></button></span>
       </div>
       <div id="rc-chips"></div>
       <div id="rc-grid"></div>
       <div id="rc-foot"><span id="rc-count"></span><span style="flex:1"></span><span id="rc-page"></span>
-        <button id="rc-prev" class="round" aria-label="Previous page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
-        <button id="rc-next" class="round" aria-label="Next page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></button></div>
+        <button id="rc-prev" class="round" aria-label="Page précédente"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+        <button id="rc-next" class="round" aria-label="Page suivante"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></button></div>
     </div>
     <div id="rc-detail" style="display:none">
       <div id="rd-top">
-        <button id="rd-back" class="tonal"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Recipes</button>
+        <button id="rd-back" class="tonal"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Recettes</button>
         <span id="rd-pos"></span><span style="flex:1"></span>
-        <button id="rd-prev" class="rd-btn" aria-label="Previous recipe"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
-        <button id="rd-next" class="rd-btn" aria-label="Next recipe"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></button>
-        <button id="rd-heart" class="rd-btn" aria-label="Add to favourites"></button>
+        <button id="rd-prev" class="rd-btn" aria-label="Recette précédente"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+        <button id="rd-next" class="rd-btn" aria-label="Recette suivante"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></button>
+        <button id="rd-heart" class="rd-btn" aria-label="Ajouter aux favoris"></button>
       </div>
-      <section id="rd-ing-card" aria-label="Ingredients">
-        <div class="row-between"><span class="big-title" style="font-size:24px">Ingredients</span><span id="rd-ing-n" class="sub"></span></div>
+      <section id="rd-ing-card" aria-label="Ingrédients">
+        <div class="row-between"><span class="big-title" style="font-size:24px">Ingrédients</span><span id="rd-ing-n" class="sub"></span></div>
         <div id="rd-ings"></div>
       </section>
       <section id="rd-title-card"><span id="rd-title"></span></section>
       <div id="rd-photo" aria-hidden="true"></div>
-      <section id="rd-method" aria-label="Method">
-        <div class="row-between"><span class="big-title" style="font-size:24px">Method</span><span id="rd-step-n" class="sub"></span></div>
+      <section id="rd-method" aria-label="Préparation">
+        <div class="row-between"><span class="big-title" style="font-size:24px">Préparation</span><span id="rd-step-n" class="sub"></span></div>
         <div id="rd-steps"></div>
       </section>
     </div>
   </div>
 
+  <div id="view-photos" class="view" style="display:none">
+    <img id="ph-a" alt=""><img id="ph-b" alt="">
+    <div id="ph-empty" style="display:none">Aucune photo. Envoyez des photos avec l’app Frameo, puis autorisez l’accès au stockage sur le cadre.</div>
+  </div>
+
+  <div id="view-solar" class="view" style="display:none">
+    <div id="so-wrap">
+      <section class="so-card" id="so-pv"><div class="so-head"><span class="so-ic peach"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"></path></svg></span><span class="big-title">Production</span></div><div id="so-pv-body" class="so-body"></div></section>
+      <section class="so-card" id="so-home"><div class="so-head"><span class="so-ic lav"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"></path></svg></span><span class="big-title">Maison</span></div><div id="so-home-body" class="so-body"></div></section>
+      <section class="so-card" id="so-bat"><div class="so-head"><span class="so-ic mint"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="16" height="10" rx="2"></rect><path d="M21 10.5v3M6.5 10v4M10 10v4"></path></svg></span><span class="big-title">Batterie</span></div><div id="so-bat-body" class="so-body"></div></section>
+      <section class="so-card" id="so-grid"><div class="so-head"><span class="so-ic sky"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l-5 18M12 3l5 18M8.5 9h7M7.3 14h9.4M12 3v18"></path></svg></span><span class="big-title">Réseau</span></div><div id="so-grid-body" class="so-body"></div></section>
+    </div>
+  </div>
+
   <div id="view-ev" class="view" style="display:none">
-    <section id="ev-charger" aria-label="Charger">
-      <div class="row-between"><span class="big-title">EV charging</span><span id="ev-state"></span></div>
+    <section id="ev-charger" aria-label="Borne">
+      <div class="row-between"><span class="big-title">Recharge VE</span><span id="ev-state"></span></div>
       <div id="ev-main"><span id="ev-blob"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 6 13.5h5.5L10 21l8-11.5h-5.5z"></path></svg></span>
         <span><span id="ev-kw"></span><span id="ev-kwu">kW</span></span></div>
       <div id="ev-nums"></div>
-      <div id="ev-btns"><button id="ev-start" class="tonal">Start charging</button><button id="ev-stop" class="tonal">Pause charging</button></div>
+      <div id="ev-btns"><button id="ev-start" class="tonal">Démarrer la charge</button><button id="ev-stop" class="tonal">Suspendre la charge</button></div>
     </section>
-    <section id="ev-price" aria-label="Price">
+    <section id="ev-price" aria-label="Prix">
       <div class="row-between"><span id="ev-now"></span><span id="ev-below" class="sub"></span></div>
       <div id="ev-bars"><span id="ev-cap"><span id="ev-cap-l"></span></span></div>
       <div id="ev-axis"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
     </section>
-    <section id="ev-plan" aria-label="Plan">
-      <span class="eyebrow">CHARGE MODE</span>
+    <section id="ev-plan" aria-label="Planification">
+      <span class="eyebrow">MODE DE CHARGE</span>
       <div id="ev-modes" class="segs"></div>
       <span id="ev-plan-txt"></span>
       <div id="ev-steps"></div>
     </section>
-    <section id="ev-sw" aria-label="Switches"></section>
+    <section id="ev-sw" aria-label="Interrupteurs"></section>
   </div>
 </div>
 <div id="stale"></div>
 <div id="toast" style="display:none"></div>
 <div id="scrim" style="display:none"></div>
 <div id="todo-sheet" style="display:none" role="dialog" aria-labelledby="todo-sheet-name">
-  <div id="todo-sheet-name" class="big-title">New to-do</div>
-  <input id="todo-input" type="text" maxlength="120" placeholder="What needs doing?" autocomplete="off" aria-label="To-do">
-  <div class="sheet-lbl" style="margin:20px 0 8px"><span>Remind me (push to phones)</span></div>
+  <div id="todo-sheet-name" class="big-title">Nouvelle tâche</div>
+  <input id="todo-input" type="text" maxlength="120" placeholder="Que faut-il faire ?" autocomplete="off" aria-label="Tâche">
+  <div class="sheet-lbl" style="margin:20px 0 8px"><span>Me rappeler (notification sur les téléphones)</span></div>
   <div id="todo-when" class="segs"></div>
-  <div class="sheet-foot"><button id="todo-cancel" class="outlined">Cancel</button><button id="todo-save" class="tonal">Add</button></div>
+  <div class="sheet-foot"><button id="todo-cancel" class="outlined">Annuler</button><button id="todo-save" class="tonal">Ajouter</button></div>
 </div>
 <div id="set-sheet" style="display:none" role="dialog" aria-labelledby="set-title">
-  <div id="set-title" class="big-title">Settings</div>
+  <div id="set-title" class="big-title">Réglages</div>
   <div id="set-ver"></div>
-  <div class="sheet-lbl" style="margin:20px 0 0"><span>Update address (where the files come from)</span></div>
-  <input id="set-url" type="text" maxlength="200" placeholder="http://<ip>:8099" autocomplete="off" autocapitalize="off" aria-label="Update address">
-  <div class="sheet-foot" style="gap:12px"><button id="set-reset" class="outlined">Use built-in</button><button id="set-close" class="outlined">Close</button><button id="set-update" class="tonal">Update now</button></div>
+  <div class="sheet-lbl" style="margin:20px 0 0"><span>Adresse de mise à jour (d’où viennent les fichiers)</span></div>
+  <input id="set-url" type="text" maxlength="200" placeholder="http://<ip>:8099" autocomplete="off" autocapitalize="off" aria-label="Adresse de mise à jour">
+  <div class="sheet-foot" style="gap:12px"><button id="set-reset" class="outlined">Version intégrée</button><button id="set-close" class="outlined">Fermer</button><button id="set-update" class="tonal">Mettre à jour</button></div>
 </div>
 <div id="sheet" style="display:none" role="dialog" aria-labelledby="sheet-name">
   <div class="handle"></div>
-  <div class="sheet-head"><div id="sheet-name"></div><button id="sheet-switch" class="sw" role="switch" aria-checked="false" aria-label="On"></button></div>
-  <div class="sheet-row"><div class="sheet-lbl"><span>Brightness</span><span id="sheet-bri-v"></span></div>
-    <input id="sheet-bri" class="range" type="range" min="1" max="100" value="100" aria-label="Brightness"></div>
-  <div class="sheet-row" id="sheet-ct-row"><div class="sheet-lbl"><span>Colour temperature</span><span id="sheet-ct-v"></span></div>
-    <input id="sheet-ct" class="range ct" type="range" min="2202" max="6535" step="50" value="4000" aria-label="Colour temperature"></div>
-  <div class="sheet-foot"><button id="sheet-done" class="tonal">Done</button></div>
+  <div class="sheet-head"><div id="sheet-name"></div><button id="sheet-switch" class="sw" role="switch" aria-checked="false" aria-label="Allumé"></button></div>
+  <div class="sheet-row"><div class="sheet-lbl"><span>Luminosité</span><span id="sheet-bri-v"></span></div>
+    <input id="sheet-bri" class="range" type="range" min="1" max="100" value="100" aria-label="Luminosité"></div>
+  <div class="sheet-row" id="sheet-ct-row"><div class="sheet-lbl"><span>Température de couleur</span><span id="sheet-ct-v"></span></div>
+    <input id="sheet-ct" class="range ct" type="range" min="2202" max="6535" step="50" value="4000" aria-label="Température de couleur"></div>
+  <div class="sheet-row" id="sheet-rgb-row"><div class="sheet-lbl"><span>Couleur</span></div>
+    <div id="sheet-rgb" class="swatches"></div></div>
+  <div class="sheet-foot"><button id="sheet-done" class="tonal">OK</button></div>
 </div>
 <script src="config.js"></script>
 <script src="common.js"></script>
@@ -789,8 +871,10 @@
 <script src="climate.js"></script>
 <script src="lights.js"></script>
 <script src="music.js"></script>
+<script src="solar.js"></script>
 <script src="ev.js"></script>
 <script src="recipes.js"></script>
+<script src="photos.js"></script>
 <script src="settings.js"></script>
 <script src="app.js"></script>
 <script>start(window.CONFIG);</script>

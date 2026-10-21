@@ -102,7 +102,7 @@ test('start() runs every tab, button and message without throwing', () => {
   }
 
   ui.onUpdate({ kind: 'action-failed', entity: config.lights[0].id, message: 'nope' });
-  assert.match(b.els.toast.textContent, /Could not change Ceiling: nope/);
+  assert.match(b.els.toast.textContent, /Impossible de modifier Ceiling : nope/);
 
   // The refresh and keep-alive intervals, then the socket dropping and a reconnect.
   for (const t of b.timers.filter((t) => t.every)) t.fn();

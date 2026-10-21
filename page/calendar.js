@@ -102,7 +102,7 @@ function calendarTab(ctx) {
   function renderMonth(list) {
     var now = new Date();
     var month = anchor.getMonth();
-    setText('cal-title', MONTHS[month] + ' ' + anchor.getFullYear());
+    setText('cal-title', cap(MONTHS[month]) + ' ' + anchor.getFullYear());
     var dates = calDates();
     $('cal-grid').className = 'month rows' + dates.length / 7;
     setHTML('cal-grid', dates.map(function (d) {
@@ -115,7 +115,7 @@ function calendarTab(ctx) {
         '<span class="num' + (dayDiff(d, now) === 0 ? ' today' : '') + '">' + d.getDate() + '</span>' +
         (bin ? '<span class="dot" style="background:' + bin.color + '"></span>' : '') + '</span>' +
         shownEvs.slice(0, 2).map(function (e, i) { return '<span class="evc c' + ((e.summary.length + i) % 4 + 1) + '">' + esc(e.summary) + '</span>'; }).join('') +
-        (shownEvs.length > 2 ? '<span class="more">+' + (shownEvs.length - 2) + ' more</span>' : '') +
+        (shownEvs.length > 2 ? '<span class="more">+' + (shownEvs.length - 2) + ' de plus</span>' : '') +
         '</button>';
     }).join(''));
     renderSide(list);
@@ -124,7 +124,7 @@ function calendarTab(ctx) {
   function renderSide(list) {
     var now = new Date();
     var diff = dayDiff(selected, now);
-    var label = diff === 0 ? 'TODAY' : diff === 1 ? 'TOMORROW' : DAYS[selected.getDay()].toUpperCase();
+    var label = diff === 0 ? 'AUJOURD’HUI' : diff === 1 ? 'DEMAIN' : DAYS[selected.getDay()].toUpperCase();
     setText('side-label', label);
     $('side-label').className = 'side-label' + (diff === 0 ? ' today' : '');
     setText('side-date', (diff === 0 || diff === 1 ? DAYS[selected.getDay()] + ' ' : '') +
@@ -132,12 +132,12 @@ function calendarTab(ctx) {
     var evs = eventsOnDay(list, selected);
     var bin = binChip(evs);
     setHTML('side-bin', bin ? '<span class="chip"><span class="dot" style="background:' + bin.color +
-      '"></span>' + esc(bin.type) + ' bin goes out</span>' : '');
+      '"></span>' + 'Sortir la poubelle : ' + esc(bin.type) + '</span>' : '');
     var rest = evs.filter(function (e) { return !isWaste(e); });
     setHTML('side-events', rest.map(function (e) {
       return '<div class="s-ev"><span class="s-bar"></span><span><div class="s-t">' + timeOf(e) + '</div><div class="s-title">' +
         esc(e.summary) + '</div></span></div>';
-    }).join('') || '<div class="muted">Nothing planned</div>');
+    }).join('') || '<div class="muted">Rien de prévu</div>');
   }
 
   function renderWeek(list) {
@@ -147,7 +147,7 @@ function calendarTab(ctx) {
     var b = dates[6];
     setText('cal-title', a.getMonth() === b.getMonth()
       ? a.getDate() + ' – ' + b.getDate() + ' ' + MONTHS[b.getMonth()]
-      : a.getDate() + ' ' + MONTHS[a.getMonth()].slice(0, 3) + ' – ' + b.getDate() + ' ' + MONTHS[b.getMonth()].slice(0, 3));
+      : a.getDate() + ' ' + MONTHS_SHORT[a.getMonth()] + ' – ' + b.getDate() + ' ' + MONTHS_SHORT[b.getMonth()]);
     $('cal-grid').className = 'week';
     setHTML('cal-grid', dates.map(function (d) {
       var evs = eventsOnDay(list, d);

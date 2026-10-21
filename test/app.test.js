@@ -47,7 +47,7 @@ test('applyEntityDiff ignores a change for an unknown entity without throwing', 
 test('parseForecast returns n daily rows from a real response', () => {
   const rows = app.parseForecast(forecasts.result, 'weather.buienradar', 3);
   assert.equal(rows.length, 3);
-  assert.deepEqual(Object.keys(rows[0]).sort(), ['bearing', 'condition', 'date', 'low', 'mm', 'rain', 'temp', 'wind']);
+  assert.deepEqual(Object.keys(rows[0]).sort(), ['bearing', 'condition', 'date', 'gust', 'low', 'mm', 'rain', 'temp', 'wind']);
   assert.equal(rows[0].temp, forecasts.result.response['weather.buienradar'].forecast[0].temperature);
   assert.ok(rows[0].date instanceof Date);
 });
@@ -88,9 +88,9 @@ test('parseEvents reads the real afvalwijzer response', () => {
 
 test('dayLabel says Today, Tomorrow, then a short date', () => {
   const now = new Date(2026, 9, 14, 15, 0);
-  assert.equal(app.dayLabel(new Date(2026, 9, 14), now), 'Today');
-  assert.equal(app.dayLabel(new Date(2026, 9, 15, 8), now), 'Tomorrow');
-  assert.equal(app.dayLabel(new Date(2026, 9, 16), now), 'Fri 16 Oct');
+  assert.equal(app.dayLabel(new Date(2026, 9, 14), now), 'Aujourd’hui');
+  assert.equal(app.dayLabel(new Date(2026, 9, 15, 8), now), 'Demain');
+  assert.equal(app.dayLabel(new Date(2026, 9, 16), now), 'Ven 16 oct.');
 });
 
 test('groupByDay keeps upcoming days in order and drops past events', () => {
@@ -101,7 +101,7 @@ test('groupByDay keeps upcoming days in order and drops past events', () => {
     { start: new Date(2026, 9, 16), end: new Date(2026, 9, 17), allDay: true, summary: 'later' },
   ];
   const days = app.groupByDay(list, now);
-  assert.deepEqual(days.map((d) => d.label), ['Today', 'Fri 16 Oct']);
+  assert.deepEqual(days.map((d) => d.label), ['Aujourd’hui', 'Ven 16 oct.']);
   assert.deepEqual(days[0].events.map((e) => e.summary), ['now']);
 });
 
@@ -113,14 +113,14 @@ test('wasteType strips the afvalwijzer prefix', () => {
 test('formatClock and formatDate', () => {
   const d = new Date(2026, 9, 14, 7, 5);
   assert.equal(app.formatClock(d), '07:05');
-  assert.equal(app.formatDate(d), 'Wednesday 14 October');
+  assert.equal(app.formatDate(d), 'Mercredi 14 octobre');
   assert.equal(app.formatTime(d), '07:05');
 });
 
 test('conditionLabel covers HA conditions and unknowns', () => {
-  assert.equal(app.conditionLabel('partlycloudy'), 'Partly cloudy');
-  assert.equal(app.conditionLabel('pouring'), 'Pouring rain');
-  assert.equal(app.conditionLabel('lightning-rainy'), 'Thunderstorm');
+  assert.equal(app.conditionLabel('partlycloudy'), 'Peu nuageux');
+  assert.equal(app.conditionLabel('pouring'), 'Averses');
+  assert.equal(app.conditionLabel('lightning-rainy'), 'Orage');
   assert.equal(app.conditionLabel('whatever'), '—');
   assert.equal(typeof app.conditionIcon('sunny'), 'string');
 });
@@ -139,8 +139,8 @@ test('backoffDelay grows and caps at 60 s', () => {
 test('staleLabel is empty while fresh, then says how old', () => {
   const now = 1_000_000_000;
   assert.equal(app.staleLabel(now - 60_000, now), '');
-  assert.equal(app.staleLabel(now - 5 * 60_000, now), 'No connection for 5 min');
-  assert.equal(app.staleLabel(0, now), 'Connecting…');
+  assert.equal(app.staleLabel(now - 5 * 60_000, now), 'Pas de connexion depuis 5 min');
+  assert.equal(app.staleLabel(0, now), 'Connexion…');
 });
 
 test('protocol: auth, then subscribe and fetch, then results route by id', () => {
@@ -296,10 +296,10 @@ test('nextTarget steps, rounds to the entity step and clamps to its range', () =
 test('climateView describes a tado zone', () => {
   const v = app.climateView({ s: 'heat', a: { friendly_name: 'Bedroom', current_temperature: 17.5, temperature: 19,
     hvac_action: 'heating', hvac_modes: ['off', 'auto', 'heat'] } });
-  assert.deepEqual(v, { name: 'Bedroom', current: '17.5°', target: '19.0°', mode: 'heat', action: 'Heating',
+  assert.deepEqual(v, { name: 'Bedroom', current: '17.5°', target: '19.0°', mode: 'heat', action: 'Chauffe',
     canAdjust: true, unavailable: false });
   const off = app.climateView({ s: 'off', a: { friendly_name: 'Living Room', current_temperature: 19.4, temperature: 5 } });
-  assert.equal(off.target, 'Off');
+  assert.equal(off.target, 'Arrêt');
   assert.equal(off.canAdjust, false);
   assert.equal(app.climateView({ s: 'unavailable', a: { friendly_name: 'Ben' } }).unavailable, true);
 });
@@ -308,8 +308,8 @@ test('lightView reads on/off, brightness percent and availability', () => {
   assert.deepEqual(app.lightView({ s: 'on', a: { brightness: 128, supported_color_modes: ['brightness'] } }, 'Shades'),
     { name: 'Shades', on: true, pct: 50, dimmable: true, unavailable: false, label: '50%' });
   assert.deepEqual(app.lightView({ s: 'off', a: { supported_color_modes: ['onoff'] } }, 'Garden'),
-    { name: 'Garden', on: false, pct: 0, dimmable: false, unavailable: false, label: 'Off' });
-  assert.equal(app.lightView({ s: 'unavailable', a: {} }, 'Spot').label, 'Unavailable');
+    { name: 'Garden', on: false, pct: 0, dimmable: false, unavailable: false, label: 'Éteint' });
+  assert.equal(app.lightView({ s: 'unavailable', a: {} }, 'Spot').label, 'Indisponible');
   assert.equal(app.lightView(undefined, 'Missing').unavailable, true);
 });
 
@@ -378,7 +378,7 @@ test('todoDue words the due time and flags overdue', () => {
   const todos = app.parseTodos(require('./fixtures/get_items.json').result, 'todo.frame');
   assert.deepEqual(app.todoDue(todos[0], now), { text: '09:00', overdue: true });
   assert.deepEqual(app.todoDue(todos[1], now), { text: '18:00', overdue: false });
-  assert.deepEqual(app.todoDue(todos[2], now), { text: 'Tue 20 Oct', overdue: false });
+  assert.deepEqual(app.todoDue(todos[2], now), { text: 'Mar 20 oct.', overdue: false });
   assert.deepEqual(app.todoDue(todos[3], now), { text: '', overdue: false });
 });
 
@@ -396,10 +396,10 @@ test('protocol: a configured todo list is subscribed, fetched and routed', () =>
   assert.ok(out.send[0].entity_ids.includes('todo.frame'));
   const get = out.send.find(m => m.domain === 'todo');
   assert.equal(get.service, 'get_items');
-  assert.deepEqual(get.target, { entity_id: 'todo.frame' });
+  assert.deepEqual(get.target, { entity_id: ['todo.frame'] });
   out = app.handleMessage(out.state, { id: get.id, type: 'result', success: true, result: require('./fixtures/get_items.json').result }, cfg);
   assert.equal(out.update.kind, 'todo');
-  assert.equal(out.update.items.length, 4);
+  assert.equal(out.update.lists['todo.frame'].length, 4);
   const none = app.handleMessage(app.initialState(), { type: 'auth_ok' }, { token: 't', weather: 'w', calendars: [] });
   assert.ok(!none.send.some(m => m.domain === 'todo'));
 });
@@ -414,8 +414,8 @@ test('isNight follows sun.sun, else 19:00-07:00', () => {
 test('weatherDetails fills six tiles and tolerates missing attributes', () => {
   const t = app.weatherDetails({ s: 'cloudy', a: { temperature: 18, apparent_temperature: 18, wind_speed: 13.2, wind_bearing: 180, humidity: 80, pressure: 1021 } }, { rain: 20, mm: 0 });
   assert.equal(t.length, 6);
-  assert.equal(t[0].note, 'Same as the air');
-  assert.equal(t[1].note, 'From S');
+  assert.equal(t[0].note, 'Comme l’air');
+  assert.equal(t[1].note, 'Du S');
   assert.equal(t[4].value, '20');
   assert.equal(app.weatherDetails(undefined, undefined)[1].value, '—');
 });
@@ -444,7 +444,7 @@ test('evView reads charger, price and plan entities', () => {
   assert.equal(v.hoursBelow, 24);
   assert.equal(v.smart, true);
   assert.equal(v.surplus, 0);
-  assert.equal(app.evView({}, ev, new Date()).stateText, 'Unknown');
+  assert.equal(app.evView({}, ev, new Date()).stateText, 'Inconnu');
 });
 
 test('stepTime moves by 30 minutes and wraps', () => {
@@ -560,4 +560,204 @@ test('parseBrowse keeps playable spotify items; playTarget picks tracks or conte
   const s = app.initialState();
   const m = app.browseCall(s, 'media_player.sp', 'spotify_user_playlists').send[0];
   assert.equal(app.handleMessage(s, { type: 'result', id: m.id, success: true, result: { children: [] } }, {}).update.shelf, 'spotify_user_playlists');
+});
+
+test('haBase and haSocketUrl default to https and keep a LAN scheme and port', () => {
+  assert.equal(app.haSocketUrl('x.ui.nabu.casa'), 'wss://x.ui.nabu.casa/api/websocket');
+  assert.equal(app.haSocketUrl('http://192.168.0.10:8123'), 'ws://192.168.0.10:8123/api/websocket');
+  assert.equal(app.haSocketUrl('https://ha.example.com/'), 'wss://ha.example.com/api/websocket');
+  assert.equal(app.haBase('http://192.168.0.10:8123'), 'http://192.168.0.10:8123');
+});
+
+test('domainOf sends switches to the switch domain', () => {
+  assert.equal(app.domainOf('switch.plug'), 'switch');
+  assert.equal(app.domainOf('light.kitchen'), 'light');
+});
+
+test('colorView shows swatches for colour lights and rings the nearest one', () => {
+  assert.deepEqual(app.colorView({ s: 'on', a: { supported_color_modes: ['color_temp'] } }), { supported: false, current: -1 });
+  assert.deepEqual(app.colorView({ s: 'on', a: { supported_color_modes: ['color_temp', 'xy'], color_mode: 'xy',
+    rgb_color: [10, 20, 250] } }), { supported: true, current: 5 });
+  assert.deepEqual(app.colorView({ s: 'on', a: { supported_color_modes: ['color_temp', 'hs'], color_mode: 'color_temp',
+    rgb_color: [255, 180, 100] } }), { supported: true, current: -1 }, 'white mode rings nothing');
+  assert.deepEqual(app.colorView({ s: 'off', a: { supported_color_modes: ['rgb'] } }), { supported: true, current: -1 });
+  assert.deepEqual(app.colorView(undefined), { supported: false, current: -1 });
+});
+
+test('Music Assistant: library and search calls ask for a response', () => {
+  const s = app.initialState();
+  const lib = app.maLibraryCall(s, 'entry1', 'radio').send[0];
+  assert.deepEqual(lib.service_data, { config_entry_id: 'entry1', media_type: 'radio', limit: 60 });
+  assert.equal(lib.domain + '.' + lib.service, 'music_assistant.get_library');
+  assert.equal(lib.return_response, true);
+  const q = app.maSearchCall(s, 'entry1', 'jazz').send[0];
+  assert.equal(q.service, 'search');
+  assert.equal(q.service_data.name, 'jazz');
+  assert.deepEqual(s.pending[q.id], { kind: 'browse', shelf: 'search', ma: true });
+});
+
+test('parseMa reads library items and flattens search groups', () => {
+  const lib = { response: { items: [
+    { media_type: 'radio', uri: 'library://radio/1', name: 'Couleur 3', image: 'http://ma/img/1' },
+    { media_type: 'track', uri: 'library://track/2', name: 'La Bohème', artists: [{ name: 'Aznavour' }], image: null },
+    { media_type: 'track', name: 'no uri' },
+  ] } };
+  assert.deepEqual(app.parseMa(lib), [
+    { title: 'Couleur 3', uri: 'library://radio/1', type: 'radio', thumb: 'http://ma/img/1' },
+    { title: 'La Bohème · Aznavour', uri: 'library://track/2', type: 'track', thumb: '' },
+  ]);
+  const search = { response: { tracks: [{ media_type: 'track', uri: 't', name: 'T' }], radio: [{ media_type: 'radio', uri: 'r', name: 'R' }], artists: [] } };
+  assert.deepEqual(app.parseMa(search).map((t) => t.uri), ['r', 't']);
+  assert.deepEqual(app.parseMa(null), []);
+});
+
+test('handleMessage routes a Music Assistant result to the browse update', () => {
+  const s = app.initialState();
+  const id = app.maLibraryCall(s, 'e', 'playlist').send[0].id;
+  const out = app.handleMessage(s, { id, type: 'result', success: true, result: { response: { items: [{ media_type: 'playlist', uri: 'p', name: 'P' }] } } }, {});
+  assert.deepEqual(out.update, { kind: 'browse', shelf: 'playlist', items: [{ title: 'P', uri: 'p', type: 'playlist', thumb: '' }] });
+});
+
+test('photoUrls takes one photo or a list and puts the HA address in front of /local paths', () => {
+  const host = 'http://192.168.0.10:8123';
+  assert.deepEqual(app.photoUrls({ host }), []);
+  assert.deepEqual(app.photoUrls({ host, background: '/local/a.jpg' }), ['http://192.168.0.10:8123/local/a.jpg']);
+  assert.deepEqual(app.photoUrls({ host, background: ['/local/a.jpg', 'https://x/b.jpg'] }),
+    ['http://192.168.0.10:8123/local/a.jpg', 'https://x/b.jpg']);
+});
+
+test('slide shows a landscape alone and pairs a portrait with the next portrait', () => {
+  const order = ['p1', 'l1', 'l2', 'p2', 'p3'];
+  const dims = { p1: { w: 600, h: 900 }, l1: { w: 1280, h: 800 }, l2: { w: 1600, h: 900 }, p2: { w: 768, h: 1024 }, p3: { w: 600, h: 900 } };
+  assert.deepEqual(app.slide(order, 0, dims, 6), ['p1', 'p2']);
+  assert.deepEqual(app.slide(order, 1, dims, 6), ['l1']);
+  assert.deepEqual(app.slide(order, 3, dims, 6), ['p2', 'p3']);
+  assert.deepEqual(app.slide(order, 4, dims, 6), ['p3', 'p1'], 'wraps around');
+  assert.deepEqual(app.slide(order, 0, dims, 2), ['p1'], 'no portrait within reach');
+  assert.deepEqual(app.slide(['p1'], 0, dims, 6), ['p1']);
+  assert.equal(app.isPortrait(undefined), false);
+});
+
+test('shuffled keeps every photo once and leaves the input alone', () => {
+  const list = ['a', 'b', 'c', 'd'];
+  const out = app.shuffled(list, () => 0);
+  assert.deepEqual([...out].sort(), list);
+  assert.deepEqual(list, ['a', 'b', 'c', 'd']);
+  assert.deepEqual(out, ['b', 'c', 'd', 'a']);
+});
+
+test('todoLists takes one list or several, with or without names', () => {
+  assert.deepEqual(app.todoLists({}), []);
+  assert.deepEqual(app.todoLists({ todo: 'todo.a' }), [{ id: 'todo.a', name: '' }]);
+  assert.deepEqual(app.todoLists({ todo: ['todo.a', { id: 'todo.b', name: 'Maison' }, { name: 'no id' }] }),
+    [{ id: 'todo.a', name: '' }, { id: 'todo.b', name: 'Maison' }]);
+});
+
+test('protocol: several todo lists are fetched in one call and routed per list', () => {
+  const cfg = { token: 't', weather: 'w', calendars: [], todo: ['todo.frame', { id: 'todo.home', name: 'Maison' }] };
+  let out = app.handleMessage(app.initialState(), { type: 'auth_ok' }, cfg);
+  assert.ok(out.send[0].entity_ids.includes('todo.home'));
+  const get = out.send.find(m => m.domain === 'todo');
+  assert.deepEqual(get.target, { entity_id: ['todo.frame', 'todo.home'] });
+  const result = JSON.parse(JSON.stringify(require('./fixtures/get_items.json').result));
+  result.response['todo.home'] = { items: [{ summary: 'Arroser', uid: 'h1', status: 'needs_action' }] };
+  out = app.handleMessage(out.state, { id: get.id, type: 'result', success: true, result }, cfg);
+  assert.equal(out.update.lists['todo.frame'].length, 4);
+  assert.deepEqual(out.update.lists['todo.home'].map(t => t.summary), ['Arroser']);
+});
+
+test('solarView reads power and energy in any unit and words the flows', () => {
+  const s = { soc: 'sensor.soc', battery: 'sensor.bat', importToday: 'sensor.imp', exportToday: 'sensor.exp', grid: 'sensor.grid' };
+  const store = {
+    'sensor.soc': { s: '78.4', a: { unit_of_measurement: '%' } },
+    'sensor.bat': { s: '1.25', a: { unit_of_measurement: 'kW' } },
+    'sensor.imp': { s: '3400', a: { unit_of_measurement: 'Wh' } },
+    'sensor.exp': { s: '6.2', a: { unit_of_measurement: 'kWh' } },
+    'sensor.grid': { s: '-640', a: { unit_of_measurement: 'W' } },
+  };
+  const v = app.solarView(store, s);
+  assert.equal(v.soc, 78);
+  assert.equal(v.battery, 1250);
+  assert.equal(v.batteryText, 'En charge');
+  assert.equal(v.importToday, 3.4);
+  assert.equal(v.exportToday, 6.2);
+  assert.equal(v.gridText, 'Revend au réseau');
+  assert.deepEqual(v.cards, { pv: false, home: false, battery: true, grid: true });
+  assert.equal(app.solarView({ 'sensor.c': { s: '2.5', a: { unit_of_measurement: 'kWh' } } }, { chargeToday: 'sensor.c' }).chargeToday, 2.5);
+  const flipped = app.solarView(store, { ...s, invertBattery: true });
+  assert.equal(flipped.batteryText, 'En décharge');
+  assert.equal(app.solarView({ 'sensor.soc': { s: 'unavailable', a: {} } }, s).soc, null);
+});
+
+test('fmtPower switches to kW from 1000 W and drops the sign', () => {
+  assert.deepEqual(app.fmtPower(850), ['850', 'W']);
+  assert.deepEqual(app.fmtPower(-2340), ['2.3', 'kW']);
+  assert.deepEqual(app.fmtPower(null), ['—', '']);
+  assert.deepEqual(app.solarIds({ soc: 'sensor.a', invertGrid: true, grid: 'sensor.b' }), ['sensor.b', 'sensor.a']);
+});
+
+test('roomTemps formats each room, naming it from HA when the config does not', () => {
+  const store = { 'sensor.a': { s: '21.34', a: { friendly_name: 'Salon temp' } }, 'sensor.b': { s: 'unavailable', a: {} } };
+  assert.deepEqual(app.roomTemps(store, [{ id: 'sensor.a', name: 'Salon' }, { id: 'sensor.b', name: 'Chambre' }, { id: 'sensor.a' }]),
+    [{ name: 'Salon', text: '21.3°', hum: '' }, { name: 'Chambre', text: '—', hum: '' }, { name: 'Salon temp', text: '21.3°', hum: '' }]);
+  assert.equal(app.roomTemps({ 'sensor.h': { s: '54.6', a: {} } }, [{ id: 'sensor.a', humidity: 'sensor.h' }])[0].hum, '55 %');
+});
+
+test('roomIcon picks a pictogram from the room name, or the configured one', () => {
+  assert.equal(app.roomIcon('Salon'), 'sofa');
+  assert.equal(app.roomIcon('Living room'), 'sofa');
+  assert.equal(app.roomIcon('Chambre'), 'bed');
+  assert.equal(app.roomIcon('Our room'), 'bed');
+  assert.equal(app.roomIcon('Cuisine'), 'kitchen');
+  assert.equal(app.roomIcon('Cave à vin'), 'garage');
+  assert.equal(app.roomIcon('Piscine'), 'pool');
+  assert.equal(app.roomIcon('Jardin'), 'outdoor');
+  assert.equal(app.roomIcon('Grenier'), 'thermo');
+  assert.equal(app.roomIcon('Salon', 'desk'), 'desk');
+  assert.equal(app.roomIcon('Salon', 'nope'), 'sofa');
+});
+
+test('weatherDetails fills in for MeteoSwiss: computed feels-like, dew point without gusts, rain in mm', () => {
+  const ms = { s: 'rainy', a: { temperature: 11.2, humidity: 88, pressure: 954.1, wind_bearing: 261, wind_speed: 12.2 } };
+  const t = app.weatherDetails(ms, { rain: null, mm: 4.2 });
+  assert.equal(t[0].value, '9°');
+  assert.equal(t[0].note, 'Plus froid que l’air');
+  assert.equal(t[2].label, 'Point de rosée');
+  assert.equal(t[2].value, '9°');
+  assert.equal(t[2].note, 'Brouillard possible');
+  assert.deepEqual([t[4].value, t[4].unit], ['4.2', 'mm']);
+  const withGust = app.weatherDetails(ms, { gust: 31, rain: 60, mm: 2 });
+  assert.deepEqual([withGust[2].label, withGust[2].value], ['Rafales', '31']);
+  assert.deepEqual([withGust[4].value, withGust[4].unit, withGust[4].note], ['60', '%', '2 mm prévus']);
+  assert.equal(Math.round(app.apparentTemp(30, 60, 0)), 34);
+});
+
+test('solarView reads the Forecast.Solar forecast and peak time', () => {
+  const store = {
+    'sensor.energy_production_today': { s: '5.24', a: { unit_of_measurement: 'kWh' } },
+    'sensor.energy_production_tomorrow': { s: '7800', a: { unit_of_measurement: 'Wh' } },
+    'sensor.power_highest_peak_time_today': { s: '2026-10-14T11:15:00+00:00', a: {} },
+  };
+  const v = app.solarView(store, { forecastToday: 'sensor.energy_production_today', forecastTomorrow: 'sensor.energy_production_tomorrow',
+    peakToday: 'sensor.power_highest_peak_time_today' });
+  assert.equal(v.forecastToday, 5.24);
+  assert.equal(v.forecastTomorrow, 7.8);
+  assert.equal(v.peak, '13:15');
+  assert.equal(v.cards.pv, true);
+  assert.equal(app.peakTime({ s: 'unknown' }), '');
+});
+
+test('solarView adds today\'s production to a remaining-only forecast', () => {
+  const store = { 'sensor.pv_today': { s: '0.6', a: { unit_of_measurement: 'kWh' } },
+    'sensor.rem': { s: '10.9052638669532', a: { unit_of_measurement: 'kWh' } }, 'sensor.d2': { s: '39.69', a: { unit_of_measurement: 'kWh' } } };
+  const v = app.solarView(store, { pvToday: 'sensor.pv_today', forecastRemaining: 'sensor.rem', forecastDay2: 'sensor.d2' });
+  assert.equal(Math.round(v.forecastToday * 10) / 10, 11.5);
+  assert.equal(v.forecastDay2, 39.69);
+});
+
+test('weatherDetails prefers a gust sensor over the dew point', () => {
+  const ms = { s: 'rainy', a: { temperature: 11.2, humidity: 88, wind_speed: 12.2 } };
+  const t = app.weatherDetails(ms, null, { s: '22.7', a: {} });
+  assert.deepEqual([t[2].label, t[2].value], ['Rafales', '23']);
+  assert.equal(app.weatherDetails(ms, null, { s: 'unavailable', a: {} })[2].label, 'Point de rosée');
 });

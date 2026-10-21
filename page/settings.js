@@ -5,7 +5,7 @@ function settingsSheet(ctx) {
   var $ = ctx.$;
   var kiosk = typeof window !== 'undefined' && window.Kiosk ? window.Kiosk : null;
   function openSettings() {
-    $('set-ver').textContent = 'Dashboard version: ' + kiosk.version();
+    $('set-ver').textContent = 'Version du tableau de bord : ' + kiosk.version();
     $('set-url').value = kiosk.updateUrl();
     $('scrim').style.display = '';
     $('set-sheet').style.display = '';

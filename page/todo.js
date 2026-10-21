@@ -1,7 +1,15 @@
 'use strict';
 // The to-do card on the Home tab and its add sheet.
 
-// --- to-do list (a Home Assistant todo.* entity) ---
+// --- to-do lists (Home Assistant todo.* entities) ---
+
+// cfg.todo: one entity id, or a list of ids or { id, name } -> [{ id, name }]; an empty name means HA's own.
+function todoLists(cfg) {
+  return [].concat(cfg.todo || []).map(function (t) {
+    return typeof t === 'string' ? { id: t, name: '' } : { id: t.id, name: t.name || '' };
+  }).filter(function (t) { return t.id; });
+}
+function todoIds(cfg) { return todoLists(cfg).map(function (t) { return t.id; }); }
 
 // todo.get_items response -> open items, dated ones first (soonest first), then undated in list order.
 function parseTodos(result, eid) {
@@ -24,24 +32,24 @@ function parseTodos(result, eid) {
   return open;
 }
 
-// "18:00", "Tomorrow 09:00", "Mon 20 Oct"; a past due time is flagged overdue.
+// "18:00", "Demain 09:00", "Mon 20 Oct"; a past due time is flagged overdue.
 function todoDue(item, now) {
   if (!item.due) return { text: '', overdue: false };
   var diff = dayDiff(item.due, now);
-  var day = diff === 0 ? '' : diff === 1 ? 'Tomorrow' : shortDate(item.due);
+  var day = diff === 0 ? '' : diff === 1 ? 'Demain' : shortDate(item.due);
   var time = item.dueHasTime ? formatTime(item.due) : '';
   var overdue = item.dueHasTime ? item.due < now : diff < 0;
-  return { text: (day && time ? day + ' ' : day) + time || 'Today', overdue: overdue };
+  return { text: (day && time ? day + ' ' : day) + time || 'Aujourd’hui', overdue: overdue };
 }
 
 // Quick reminder choices for a new item; the frame has no date picker, so these are presets.
 function reminderOptions(now) {
-  var opts = [{ id: 'none', label: 'No reminder', due: null }];
-  opts.push({ id: 'hour', label: 'In 1 hour', due: new Date(now.getTime() + 3600000) });
+  var opts = [{ id: 'none', label: 'Aucun', due: null }];
+  opts.push({ id: 'hour', label: 'Dans 1 heure', due: new Date(now.getTime() + 3600000) });
   var evening = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0);
-  if (evening - now > 30 * 60000) opts.push({ id: 'evening', label: 'This evening', due: evening });
+  if (evening - now > 30 * 60000) opts.push({ id: 'evening', label: 'Ce soir', due: evening });
   var tomorrow = addDays(now, 1);
-  opts.push({ id: 'morning', label: 'Tomorrow 09:00',
+  opts.push({ id: 'morning', label: 'Demain 09:00',
     due: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 9, 0) });
   return opts;
 }
@@ -57,22 +65,39 @@ function todoCard(ctx) {
   var state = null;
   var todoReady = false; // the first snapshot only seeds the store; the list is fetched on connect
 
+  var lists = todoLists(cfg);
+  var current = lists.length ? lists[0].id : null; // the list on screen; Add and ticks go to it
+  var byList = {};
   var todos = [];
   var newDue = null;
 
+  function listName(l) {
+    var e = ctx.store[l.id];
+    return l.name || (e && e.a.friendly_name) || l.id;
+  }
+
   function renderTodos() {
     var now = new Date();
-    setText('todo-count', todos.length + ' open');
+    todos = byList[current] || [];
+    setText('todo-count', todos.length + ' à faire');
+    // Two or more lists: tabs with their counts take the title's place.
+    if (lists.length > 1) {
+      setHTML('todo-tabs', lists.map(function (l) {
+        var n = (byList[l.id] || []).length;
+        return '<button class="seg' + (l.id === current ? ' on' : '') + '" data-list="' + esc(l.id) + '">' +
+          esc(listName(l)) + (n ? ' <b>' + n + '</b>' : '') + '</button>';
+      }).join(''));
+    }
     setHTML('todo-list', todos.map(function (t) {
       var d = todoDue(t, now);
       return '<div class="todo" data-uid="' + esc(t.uid) + '"><span class="todo-box"></span>' +
         '<span class="todo-title">' + esc(t.summary) + '</span>' +
         (d.text ? '<span class="todo-due' + (d.overdue ? ' overdue' : '') + '">' + d.text + '</span>' : '') + '</div>';
-    }).join('') || '<div class="muted">Nothing to do</div>');
+    }).join('') || '<div class="muted">Rien à faire</div>');
   }
 
   function refetchTodos() {
-    if (cfg.todo && state && state.subId) sendAll(refresh(state, cfg, 'todo').send);
+    if (lists.length && state && state.subId) sendAll(refresh(state, cfg, 'todo').send);
   }
 
   function renderReminderChoices() {
@@ -86,6 +111,7 @@ function todoCard(ctx) {
   function openTodoSheet() {
     newDue = null;
     $('todo-input').value = '';
+    setText('todo-sheet-name', lists.length > 1 ? 'Nouvelle tâche · ' + listName(lists.filter(function (l) { return l.id === current; })[0]) : 'Nouvelle tâche');
     renderReminderChoices();
     $('scrim').style.display = '';
     $('todo-sheet').style.display = '';
@@ -103,8 +129,8 @@ function todoCard(ctx) {
     if (!text || !state) return;
     var data = { item: text };
     if (newDue) data.due_datetime = localIso(newDue);
-    sendAll(serviceCall(state, 'todo', 'add_item', cfg.todo, data).send);
-    todos = todos.concat([{ uid: 'new-' + Date.now(), summary: text, due: newDue, dueHasTime: !!newDue, n: todos.length }]);
+    sendAll(serviceCall(state, 'todo', 'add_item', current, data).send);
+    todos = byList[current] = todos.concat([{ uid: 'new-' + Date.now(), summary: text, due: newDue, dueHasTime: !!newDue, n: todos.length }]);
     renderTodos();
     closeTodoSheet();
     setTimeout(refetchTodos, 800);
@@ -126,23 +152,32 @@ function todoCard(ctx) {
     if (!row || !state) return;
     var uid = row.getAttribute('data-uid');
     if (uid.indexOf('new-') === 0) return;
-    sendAll(serviceCall(state, 'todo', 'update_item', cfg.todo, { item: uid, status: 'completed' }).send);
-    todos = todos.filter(function (t) { return t.uid !== uid; });
+    sendAll(serviceCall(state, 'todo', 'update_item', current, { item: uid, status: 'completed' }).send);
+    todos = byList[current] = todos.filter(function (t) { return t.uid !== uid; });
     renderTodos();
     setTimeout(refetchTodos, 800);
   };
 
-  if (!cfg.todo) { $('todo-box').style.display = 'none'; $('todo-add').style.display = 'none'; }
+  $('todo-tabs').onclick = function (ev) {
+    var b = ev.target.closest('.seg');
+    if (!b) return;
+    current = b.getAttribute('data-list');
+    renderTodos();
+  };
+
+  if (!lists.length) { $('todo-box').style.display = 'none'; $('todo-add').style.display = 'none'; }
+  if (lists.length > 1) { $('todo-title').style.display = 'none'; $('todo-tabs').style.display = ''; }
   setInterval(refetchTodos, 5 * 60000);
 
   return {
     onConnecting: function (s) { state = s; todoReady = false; },
     onUpdate: function (u, changed) {
       if (u.kind === 'entities') {
-        if (cfg.todo && changed.has(cfg.todo) && todoReady) refetchTodos(); // list changed elsewhere (phone, HA)
+        // A list changed elsewhere (phone, HA)
+        if (todoReady && lists.some(function (l) { return changed.has(l.id); })) refetchTodos();
         todoReady = true;
       } else if (u.kind === 'todo') {
-        todos = u.items;
+        byList = u.lists;
         renderTodos();
       }
     },

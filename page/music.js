@@ -5,9 +5,9 @@
 
 var SHELVES = [
   { id: 'spotify_user_playlists', label: 'Playlists' },
-  { id: 'spotify_user_recently_played', label: 'Recent' },
-  { id: 'spotify_user_saved_tracks', label: 'Liked songs' },
-  { id: 'spotify_user_followed_artists', label: 'Artists' },
+  { id: 'spotify_user_recently_played', label: 'Récents' },
+  { id: 'spotify_user_saved_tracks', label: 'Titres likés' },
+  { id: 'spotify_user_followed_artists', label: 'Artistes' },
   { id: 'spotify_user_saved_albums', label: 'Albums' },
 ];
 
@@ -33,6 +33,45 @@ function playTarget(item, device) {
   return { service: 'player_media_play_context', data: { context_uri: item.uri, device_id: device } };
 }
 
+// --- Music Assistant library (music.assistant: the MA config entry id) ---
+
+var MA_SHELVES = [
+  { id: 'radio', label: 'Radios' },
+  { id: 'playlist', label: 'Playlists' },
+  { id: 'album', label: 'Albums' },
+  { id: 'artist', label: 'Artistes' },
+  { id: 'track', label: 'Titres' },
+];
+var MA_SEARCH = { id: 'search', label: 'Résultats' };
+
+function maLibraryCall(state, entry, type) {
+  var id = state.nextId++;
+  state.pending[id] = { kind: 'browse', shelf: type, ma: true };
+  return { state: state, send: [{ id: id, type: 'call_service', domain: 'music_assistant', service: 'get_library',
+    service_data: { config_entry_id: entry, media_type: type, limit: 60 }, return_response: true }] };
+}
+
+function maSearchCall(state, entry, text) {
+  var id = state.nextId++;
+  state.pending[id] = { kind: 'browse', shelf: MA_SEARCH.id, ma: true };
+  return { state: state, send: [{ id: id, type: 'call_service', domain: 'music_assistant', service: 'search',
+    service_data: { config_entry_id: entry, name: text, limit: 8 }, return_response: true }] };
+}
+
+// MA media item -> tile; a track shows its artist too.
+function maTile(x) {
+  var artist = x.artists && x.artists[0] && x.artists[0].name;
+  return { title: (x.name || '') + (x.media_type === 'track' && artist ? ' · ' + artist : ''), uri: x.uri,
+    type: x.media_type || '', thumb: typeof x.image === 'string' ? x.image : '' };
+}
+
+// get_library response ({ items }) or search response ({ radio, artists, albums, playlists, tracks }) -> tiles.
+function parseMa(result) {
+  var r = (result && result.response) || {};
+  var items = r.items || [].concat(r.radio || [], r.artists || [], r.albums || [], r.playlists || [], r.tracks || []);
+  return items.filter(function (x) { return x && x.uri; }).map(maTile);
+}
+
 
 // --- player ---
 
@@ -55,7 +94,7 @@ function musicView(e, now) {
   if (pos != null && dur) pos = Math.min(pos, dur);
   return {
     unavailable: unavailable, playing: playing, state: unavailable ? 'unavailable' : e.s,
-    title: a.media_title || (playing || (e && e.s === 'paused') ? 'Unknown' : 'Not playing'),
+    title: a.media_title || (playing || (e && e.s === 'paused') ? 'Inconnu' : 'Aucune lecture'),
     artist: a.media_artist || '', art: a.entity_picture || '',
     pos: pos, dur: dur, pct: pos != null && dur ? Math.round(pos / dur * 100) : 0,
     volume: a.volume_level != null ? Math.round(a.volume_level * 100) : null,
@@ -101,17 +140,20 @@ function musicTab(ctx) {
   var NOTE = '<svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="17" cy="16" r="3"></circle></svg>';
 
   var pickedAt = 0;
+  var volDrag = false; // a finger is on the volume slider: don't move it under the finger
 
-  // Spotify library shelves (needs music.library: the SpotifyPlus media_player).
-  var library = music && music.library || null;
-  var shelf = SHELVES[0].id;
+  // Library shelves: Music Assistant (music.assistant, a config entry id) or Spotify (music.library, SpotifyPlus).
+  var ma = music && music.assistant || null;
+  var library = ma ? null : music && music.library || null;
+  var shelfList = ma ? MA_SHELVES : SHELVES;
+  var shelf = shelfList[0].id;
   var shelves = {};   // shelf id -> tiles, null when it failed
   var shelfAsked = {};
 
   function loadShelf(id) {
-    if (!library || !state || !state.subId || shelfAsked[id]) return;
+    if (!(library || ma) || !state || !state.subId || shelfAsked[id] || id === MA_SEARCH.id) return;
     shelfAsked[id] = true;
-    sendAll(browseCall(state, library, id).send);
+    sendAll((ma ? maLibraryCall(state, ma, id) : browseCall(state, library, id)).send);
   }
 
   function speakerDevice() {
@@ -121,37 +163,51 @@ function musicTab(ctx) {
   }
 
   function renderShelf() {
-    if (!library) return;
-    setHTML('mu-shelves', SHELVES.map(function (h) {
+    if (!(library || ma)) return;
+    setHTML('mu-shelves', (MA_SEARCH.id in shelves ? [MA_SEARCH] : []).concat(shelfList).map(function (h) {
       return '<button class="chip' + (h.id === shelf ? ' on' : '') + '" data-shelf="' + h.id + '">' + esc(h.label) + '</button>';
     }).join(''));
     var items = shelves[shelf];
     setHTML('mu-lib', items ? items.map(function (t, i) {
       return '<button class="tile" data-i="' + i + '"><span class="tile-art' + (t.type === 'artist' ? ' round' : '') + '">' +
-        (t.thumb ? '<img src="' + esc(t.thumb) + '" alt="">' : '') + '</span><span class="tile-t">' + esc(t.title) + '</span></button>';
-    }).join('') || '<div class="rc-empty-s">Nothing here</div>' :
-      '<div class="rc-empty-s">' + (items === null ? 'Could not load Spotify' : 'Loading…') + '</div>');
+        (t.thumb ? '<img src="' + esc(t.thumb) + '" alt="" onerror="this.style.display=\'none\'">' : '') + '</span><span class="tile-t">' + esc(t.title) + '</span></button>';
+    }).join('') || '<div class="rc-empty-s">Rien ici</div>' :
+      '<div class="rc-empty-s">' + (items === null ? (ma ? 'Impossible de charger Music Assistant' : 'Impossible de charger Spotify') : 'Chargement…') + '</div>');
   }
 
   function playTile(t) {
+    if (ma && state && t && speaker) {
+      sendAll(serviceCall(state, 'music_assistant', 'play_media', speaker, { media_id: t.uri, media_type: t.type }).send);
+      var on = speakers.filter(function (x) { return x.id === speaker; })[0];
+      toast('Lecture de ' + t.title + (on ? ' sur ' + on.name : ''));
+      return;
+    }
     if (!state || !library || !t) return;
     var dev = speakerDevice();
     var pt = playTarget(t, dev);
     // SpotifyPlus takes entity_id as a plain string, which the websocket `target` (always a list) breaks.
     sendAll(serviceCall(state, 'spotifyplus', pt.service, null, Object.assign({ entity_id: library }, pt.data)).send);
-    toast('Playing ' + t.title + (dev ? ' on ' + dev : ''));
+    toast('Lecture de ' + t.title + (dev ? ' sur ' + dev : ''));
   }
 
   // What both players show, the Music tab (ids mu-*) and the Home card (mc-*).
   function renderPlayer(p, v) {
     setText(p + '-title', v.title);
     setText(p + '-artist', v.artist);
-    setHTML(p + '-art', v.art ? '<img src="' + esc(v.art.indexOf('/') === 0 ? 'https://' + cfg.host + v.art : v.art) + '" alt="">' : NOTE);
+    // A cover that fails to load (a dead station logo, an address the frame cannot reach) falls back to the note.
+    setHTML(p + '-art', v.art ? '<img src="' + esc(v.art.indexOf('/') === 0 ? haBase(cfg.host) + v.art : v.art) +
+      '" alt="" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'">' +
+      NOTE.replace('<svg', '<svg style="display:none"') : NOTE);
     var name = speakers.filter(function (m) { return m.id === speaker; })[0];
-    setText(p + '-on', 'On ' + (name ? name.name : ''));
+    setText(p + '-on', 'Sur ' + (name ? name.name : ''));
     setText(p + '-vol-v', v.volume == null ? '—' : v.volume + '%');
+    if (p === 'mu' && !volDrag) {
+      var r = $('mu-vol-r');
+      r.disabled = v.volume == null;
+      if (+r.value !== (v.volume || 0)) { r.value = v.volume || 0; r.style.setProperty('--v', (v.volume || 0) + '%'); }
+    }
     setHTML(p + '-play', v.playing ? PAUSE : PLAY);
-    var label = v.playing ? 'Pause' : 'Play';
+    var label = v.playing ? 'Pause' : 'Lecture';
     if (shown[p + '-play:label'] !== label) { shown[p + '-play:label'] = label; $(p + '-play').setAttribute('aria-label', label); }
   }
 
@@ -166,7 +222,7 @@ function musicTab(ctx) {
     speaker = playingSpeaker(store, speakers, speaker, pickedAt, Date.now());
     var v = musicView(store[speaker], new Date());
     renderPlayer('mu', v);
-    setText('mu-eyebrow', v.playing ? 'NOW PLAYING' : v.state === 'paused' ? 'PAUSED' : 'NOT PLAYING');
+    setText('mu-eyebrow', v.playing ? 'EN LECTURE' : v.state === 'paused' ? 'EN PAUSE' : 'AUCUNE LECTURE');
     $('mu-fill').style.width = v.pct + '%';
     setText('mu-pos', fmtDur(v.pos));
     setText('mu-dur', fmtDur(v.dur));
@@ -177,11 +233,20 @@ function musicTab(ctx) {
     }).join(''));
     renderShelf();
     setHTML('mu-recent', recent.map(function (r) { return '<button class="rc">' + esc(r) + '</button>'; }).join('') ||
-      '<span class="muted" style="padding-top:0">Nothing yet</span>');
+      '<span class="muted" style="padding-top:0">Rien pour l’instant</span>');
   }
 
   function playQuery(q) {
     q = q.replace(/\s+/g, ' ').trim();
+    if (ma) {
+      if (!q || !state || !state.subId) return;
+      shelf = MA_SEARCH.id;
+      shelves[shelf] = undefined;
+      sendAll(maSearchCall(state, ma, q).send);
+      $('mu-q').blur();
+      renderMusic();
+      return;
+    }
     if (!q || !state || !speaker) return;
     sendAll(serviceCall(state, 'media_player', 'play_media', speaker,
       { media_content_type: 'music', media_content_id: q + ' on Spotify' }).send);
@@ -189,20 +254,31 @@ function musicTab(ctx) {
     try { localStorage.setItem('recent', JSON.stringify(recent)); } catch (x) { /* storage off: no history */ }
     $('mu-q').value = '';
     $('mu-q').blur();
-    toast('Asking Alexa for ' + q);
+    toast('Demande à Alexa : ' + q);
     renderMusic();
   }
 
-  if (!library) { $('mu-shelves').style.display = 'none'; $('mu-lib').style.display = 'none'; }
+  if (!(library || ma)) { $('mu-shelves').style.display = 'none'; $('mu-lib').style.display = 'none'; }
   else { $('mu-recent').style.display = 'none'; $('mu-recent-l').style.display = 'none'; }
+  if (ma) { $('mu-q').placeholder = 'Titre, artiste, album ou radio'; $('mu-go').textContent = 'Chercher'; $('mu-hint').textContent = 'Recherche dans Music Assistant ; touchez un résultat pour le lire.'; }
+
+  // "search": false for speakers that are not Alexa or no Spotify: the search box could not play anything.
+  if (music && music.search === false) {
+    ['mu-searchrow', 'mu-hint', 'mu-recent', 'mu-recent-l'].forEach(function (id) { $(id).style.display = 'none'; });
+    if (!library && !ma) { $('mu-find').style.display = 'none'; $('mu-now').style.width = 'auto'; $('mu-now').style.right = '24px'; }
+  }
 
   if (!music) $('mc-box').style.display = 'none';
   if (music) {
     function transport(service) { if (state) sendAll(serviceCall(state, 'media_player', service, speaker, {}).send); }
     function vol(dir) {
       var e = store[speaker];
+      if (!e) return;
+      setVolume(nextVolume(e.a.volume_level, dir));
+    }
+    function setVolume(next) {
+      var e = store[speaker];
       if (!state || !e) return;
-      var next = nextVolume(e.a.volume_level, dir);
       e.a.volume_level = next; // show it now; the subscription confirms
       renderMusic();
       renderMusicCard();
@@ -214,6 +290,17 @@ function musicTab(ctx) {
       $(p + '-next').onclick = function () { transport('media_next_track'); };
       $(p + '-vdown').onclick = function () { vol(-1); };
       $(p + '-vup').onclick = function () { vol(1); };
+    });
+    // The slider shows the value while dragging and sends one volume_set when the finger lifts.
+    $('mu-vol-r').addEventListener('input', function () {
+      var r = $('mu-vol-r');
+      volDrag = true;
+      r.style.setProperty('--v', r.value + '%');
+      setText('mu-vol-v', r.value + '%');
+    });
+    $('mu-vol-r').addEventListener('change', function () {
+      volDrag = false;
+      setVolume(+$('mu-vol-r').value / 100);
     });
     $('mc-open').onclick = function () { ctx.showView('music'); };
     $('mu-spk').onclick = function (e) {

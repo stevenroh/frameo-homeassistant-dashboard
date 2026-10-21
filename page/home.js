@@ -49,8 +49,22 @@ function todayEvents(events, now) {
 }
 
 
+// cfg.temperatures [{ id, name, humidity? }] + entity store -> "21.3°" (chips on Home, cards on Climate); an
+// unavailable sensor shows "—", humidity is '' when not configured.
+function roomTemps(store, rooms) {
+  function val(id) { var e = id && store[id]; var v = e && parseFloat(e.s); return e && isFinite(v) ? v : null; }
+  return (rooms || []).map(function (r) {
+    var e = store[r.id];
+    var t = val(r.id);
+    var h = val(r.humidity);
+    return { name: r.name || (e && e.a.friendly_name) || r.id, text: t == null ? '—' : t.toFixed(1) + '°',
+      hum: r.humidity ? (h == null ? '—' : Math.round(h) + ' %') : '' };
+  });
+}
+
 function homeTab(ctx) {
   var cfg = ctx.cfg;
+  var $ = ctx.$;
   var setHTML = ctx.setHTML;
   var esc = ctx.esc;
   var isWaste = ctx.isWaste;
@@ -63,25 +77,35 @@ function homeTab(ctx) {
     var bins = groupByDay(events.filter(isWaste), now).slice(0, 3);
     setHTML('bins', bins.map(function (d) {
       var types = d.events.map(function (e) { return wasteType(e.summary); });
-      var label = esc(types.join(', ')) + ' ' + esc(d.label === 'Tomorrow' ? 'tmrw' : d.label.toLowerCase());
+      var label = esc(types.join(', ')) + ' ' + esc(d.label.toLowerCase());
       // collection day: the whole chip in the bins' colours, else a dot of them
-      if (d.label === 'Today') return '<span class="bchip now" style="background:' + binFill(types) + '">' + label + '</span>';
+      if (d.label === 'Aujourd’hui') return '<span class="bchip now" style="background:' + binFill(types) + '">' + label + '</span>';
       return '<span class="bchip"><span class="dot" style="background:' + binFill(types) + '"></span>' + label + '</span>';
     }).join(''));
     var today = todayEvents(events.filter(function (e) { return !isWaste(e); }), now);
     setHTML('agenda', today.map(function (e) {
       return '<div class="a-ev"><span class="a-bar"></span><span class="a-body"><span class="a-t">' + timeOf(e) +
         '</span><span class="a-title">' + esc(e.summary) + '</span></span></div>';
-    }).join('') || '<div class="muted">Nothing else today</div>');
+    }).join('') || '<div class="muted">Rien d’autre aujourd’hui</div>');
   }
 
   // Every 5 min: refresh the agenda.
   setInterval(function () { if (state && state.subId) ctx.sendAll(refresh(state, cfg, 'calendar').send); }, 5 * 60000);
 
+  var rooms = cfg.temperatures || [];
+  var THERMO = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 13.5V5a2 2 0 0 1 4 0v8.5a4 4 0 1 1-4 0z"></path></svg>';
+  function renderRooms() {
+    setHTML('rooms', roomTemps(ctx.store, rooms).map(function (r) {
+      return '<span class="room-t">' + THERMO + esc(r.name) + ' <b>' + r.text + '</b></span>';
+    }).join(''));
+  }
+  if (!rooms.length) $('rooms').style.display = 'none';
+
   return {
     onConnecting: function (s) { state = s; },
-    onUpdate: function (u) {
+    onUpdate: function (u, changed) {
       if (u.kind === 'calendar') { events = u.events; renderHomeCalendars(); }
+      if (u.kind === 'entities' && rooms.some(function (r) { return changed.has(r.id); })) renderRooms();
     },
     onTick: function (newDay) { if (newDay) renderHomeCalendars(); },
   };

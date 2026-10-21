@@ -10,7 +10,7 @@ function lightView(e, name) {
   var pct = on && a.brightness ? Math.round(a.brightness / 255 * 100) : 0;
   return {
     name: name, on: on, pct: pct, dimmable: dimmable, unavailable: unavailable,
-    label: unavailable ? 'Unavailable' : on ? (dimmable && pct ? pct + '%' : 'On') : 'Off',
+    label: unavailable ? 'Indisponible' : on ? (dimmable && pct ? pct + '%' : 'Allumé') : 'Éteint',
   };
 }
 
@@ -24,6 +24,31 @@ function colorTempView(e) {
   return { supported: true, min: min, max: max, kelvin: a.color_temp_kelvin || Math.round((min + max) / 2) };
 }
 
+// Colour swatches for the hold sheet, sent as rgb_color. HA reports rgb_color at full brightness,
+// so the nearest swatch is a fair guess at the current colour.
+var SWATCHES = [
+  { name: 'Rouge', rgb: [255, 0, 0] }, { name: 'Orange', rgb: [255, 128, 0] }, { name: 'Jaune', rgb: [255, 220, 0] },
+  { name: 'Vert', rgb: [0, 255, 0] }, { name: 'Cyan', rgb: [0, 255, 255] }, { name: 'Bleu', rgb: [0, 0, 255] },
+  { name: 'Violet', rgb: [140, 0, 255] }, { name: 'Rose', rgb: [255, 0, 160] },
+];
+var COLOR_MODES = ['hs', 'xy', 'rgb', 'rgbw', 'rgbww'];
+
+function colorView(e) {
+  var a = (e && e.a) || {};
+  var supported = (a.supported_color_modes || []).some(function (m) { return COLOR_MODES.indexOf(m) >= 0; });
+  if (!supported) return { supported: false, current: -1 };
+  var c = e.s === 'on' && COLOR_MODES.indexOf(a.color_mode) >= 0 && a.rgb_color;
+  if (!c) return { supported: true, current: -1 };
+  var best = -1, bestD = Infinity;
+  SWATCHES.forEach(function (s, i) {
+    var d = Math.pow(s.rgb[0] - c[0], 2) + Math.pow(s.rgb[1] - c[1], 2) + Math.pow(s.rgb[2] - c[2], 2);
+    if (d < bestD) { bestD = d; best = i; }
+  });
+  return { supported: true, current: best };
+}
+
+// On/off goes to the entity's own domain, so a switch (a smart plug) can sit in the list next to lights.
+function domainOf(id) { return id.split('.')[0]; }
 
 function lightsTab(ctx) {
   var cfg = ctx.cfg;
@@ -34,6 +59,7 @@ function lightsTab(ctx) {
   var esc = ctx.esc;
   var sendAll = ctx.sendAll;
   var state = null;
+  if (!cfg.lights.length) $('nav-lights').style.display = 'none';
   var lights = cfg.lights || [];
   var lightIds = lights.map(function (l) { return l.id; });
 
@@ -66,12 +92,13 @@ function lightsTab(ctx) {
           '<span class="lt-fill" style="width:' + (v.on ? (v.dimmable && v.pct ? v.pct : 100) : 0) + '%"></span>' +
           '<span class="lt-ic">' + BULB_S + '</span><span class="lt-name">' + esc(v.name) + '</span><span class="lt-label">' + v.label + '</span></button>';
       }).join('');
-      return '<section class="room"><div class="room-head"><span class="room-name">' + esc(r.name) + '</span><span class="room-count">' +
-        (r.items.length > 1 ? onCount + ' of ' + r.items.length + ' on' : (onCount ? 'On' : 'Off')) + '</span></div>' + rows + '</section>';
+      return '<section class="room"><div class="room-head"><span class="room-ic">' + roomIconSvg(r.name, null, 22) + '</span><span class="room-name">' +
+        esc(r.name) + '</span><span class="room-count">' +
+        (r.items.length > 1 ? onCount + ' sur ' + r.items.length + ' allumées' : (onCount ? 'Allumé' : 'Éteint')) + '</span></div>' + rows + '</section>';
     }).join(''));
     $('all-off').disabled = !anyOn;
     var onCount = lights.filter(function (l) { return lightView(store[l.id], l.name).on; }).length;
-    setText('lights-sub', onCount + ' on · hold a light for brightness and colour');
+    setText('lights-sub', onCount + (onCount > 1 ? ' allumées' : ' allumée'));
   }
 
   function setRange(el, value, min, max) {
@@ -86,18 +113,38 @@ function lightsTab(ctx) {
     if (!sheetId || sliding) return;
     var v = lightView(store[sheetId], lightName(sheetId));
     var ct = colorTempView(store[sheetId]);
+    var col = colorView(store[sheetId]);
     setText('sheet-name', v.name);
     $('sheet-switch').setAttribute('aria-checked', v.on ? 'true' : 'false');
     $('sheet-switch').disabled = v.unavailable;
     $('sheet-bri').disabled = !v.dimmable || v.unavailable;
     setRange($('sheet-bri'), v.on ? (v.pct || 100) : 0, 0, 100);
-    setText('sheet-bri-v', v.on ? (v.pct || 100) + '%' : 'Off');
+    setText('sheet-bri-v', v.on ? (v.pct || 100) + '%' : 'Éteint');
     $('sheet-ct-row').style.display = ct.supported ? '' : 'none';
     if (ct.supported) {
       setRange($('sheet-ct'), ct.kelvin, ct.min, ct.max);
       setText('sheet-ct-v', ct.kelvin + ' K');
     }
+    $('sheet-rgb-row').style.display = col.supported ? '' : 'none';
+    renderSwatches(col.current);
   }
+
+  // Buttons, not sliders, so rewriting them on an update cannot break a drag; setHTML skips unchanged HTML.
+  function renderSwatches(current) {
+    setHTML('sheet-rgb', SWATCHES.map(function (s, i) {
+      return '<button class="swatch' + (i === current ? ' on' : '') + '" data-i="' + i + '" aria-label="' + s.name +
+        '" style="background:rgb(' + s.rgb.join(',') + ')"></button>';
+    }).join(''));
+  }
+
+  $('sheet-rgb').onclick = function (ev) {
+    var b = ev.target.closest('.swatch');
+    if (!b || !sheetId || !state) return;
+    var i = +b.getAttribute('data-i');
+    renderSwatches(i);
+    $('sheet-switch').setAttribute('aria-checked', 'true');
+    sendAll(serviceCall(state, 'light', 'turn_on', sheetId, { rgb_color: SWATCHES[i].rgb }).send);
+  };
 
   function openSheet(id) {
     sheetId = id;
@@ -144,7 +191,7 @@ function lightsTab(ctx) {
     if (!sheetId || !state) return;
     var on = $('sheet-switch').getAttribute('aria-checked') === 'true';
     $('sheet-switch').setAttribute('aria-checked', on ? 'false' : 'true');
-    sendAll(serviceCall(state, 'light', on ? 'turn_off' : 'turn_on', sheetId, {}).send);
+    sendAll(serviceCall(state, domainOf(sheetId), on ? 'turn_off' : 'turn_on', sheetId, {}).send);
   };
   $('sheet-bri').addEventListener('input', function () {
     var el = $('sheet-bri');
@@ -172,12 +219,12 @@ function lightsTab(ctx) {
     var id = tile.getAttribute('data-id');
     // Show the flip right away; the subscription confirms it a moment later.
     tile.className = tile.className.indexOf(' on') >= 0 ? tile.className.replace(' on', '') : tile.className + ' on';
-    sendAll(serviceCall(state, 'light', 'toggle', id, {}).send);
+    sendAll(serviceCall(state, domainOf(id), 'toggle', id, {}).send);
   };
   $('all-off').onclick = function () {
     if (!state) return;
     lights.forEach(function (l) {
-      if (store[l.id] && store[l.id].s === 'on') sendAll(serviceCall(state, 'light', 'turn_off', l.id, {}).send);
+      if (store[l.id] && store[l.id].s === 'on') sendAll(serviceCall(state, domainOf(l.id), 'turn_off', l.id, {}).send);
     });
   };
 

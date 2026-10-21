@@ -1,14 +1,16 @@
-// secrets/config.json -> build/assets/config.js. The waste calendar is fetched with the others.
+// secrets/config.json -> build/assets/config.js. The waste calendar (optional) is fetched with the others.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 export function renderConfig(cfg) {
-  for (const k of ['host', 'token', 'weather', 'waste', 'calendars']) {
+  for (const k of ['host', 'token', 'weather', 'calendars']) {
     if (cfg[k] == null || cfg[k] === '') throw new Error(`config: missing ${k}`);
   }
-  const calendars = [...new Set([...cfg.calendars, cfg.waste])];
-  const out = { host: cfg.host, token: cfg.token, weather: cfg.weather, waste: cfg.waste, calendars,
+  const calendars = [...new Set([...cfg.calendars, ...(cfg.waste ? [cfg.waste] : [])])];
+  const out = { host: cfg.host, token: cfg.token, weather: cfg.weather, waste: cfg.waste || '', calendars,
     climate: cfg.climate || [], lights: cfg.lights || [], todo: cfg.todo || '',
-    ev: cfg.ev || null, music: cfg.music || null, recipes: cfg.recipes || null };
+    ev: cfg.ev || null, music: cfg.music || null, recipes: cfg.recipes || null,
+    background: cfg.background || null,
+    photos: cfg.photos || null, solar: cfg.solar || null, temperatures: cfg.temperatures || null, gusts: cfg.gusts || null, photoSeconds: cfg.photoSeconds || null };
   return `window.CONFIG = ${JSON.stringify(out)};\n`;
 }
 

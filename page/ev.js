@@ -22,8 +22,8 @@ function hourlyPrices(list) {
 }
 
 var CHARGER_STATE = {
-  connected_charging: ['Charging', true], connected_requesting: ['Waiting for the car', false],
-  connected_finished: ['Finished', false], disconnected: ['Not plugged in', false],
+  connected_charging: ['En charge', true], connected_requesting: ['En attente de la voiture', false],
+  connected_finished: ['Terminé', false], disconnected: ['Non branché', false],
 };
 
 function num(e) { var v = e && parseFloat(e.s); return isFinite(v) ? v : null; }
@@ -32,7 +32,7 @@ function num(e) { var v = e && parseFloat(e.s); return isFinite(v) ? v : null; }
 function evView(store, ev, now) {
   function g(k) { return ev[k] ? store[ev[k]] : undefined; }
   var mode = g('mode');
-  var st = CHARGER_STATE[mode && mode.s] || ['Unknown', false];
+  var st = CHARGER_STATE[mode && mode.s] || ['Inconnu', false];
   var power = num(g('power'));
   var cap = num(g('cap'));
   var prices = hourlyPrices(g('prices') && g('prices').a.today);
@@ -83,11 +83,11 @@ function evTab(ctx) {
     $('ev-state').className = v.charging ? 'on' : '';
     setText('ev-kw', v.kw);
     function nt(x, l) { return '<span class="num-t"><b>' + (x == null ? '—' : x.toFixed(1)) + '</b><span>' + l + '</span></span>'; }
-    setHTML('ev-nums', nt(v.session, 'kWh this session') + nt(v.today, 'kWh today') + nt(v.month, 'kWh this month'));
+    setHTML('ev-nums', nt(v.session, 'kWh cette session') + nt(v.today, 'kWh aujourd’hui') + nt(v.month, 'kWh ce mois'));
     $('ev-start').disabled = !v.pluggedIn || v.charging;
     $('ev-stop').disabled = !v.charging;
-    setHTML('ev-now', 'Price now <b>' + (v.price == null ? '—' : '€' + v.price.toFixed(2)) + '</b> /kWh');
-    setText('ev-below', v.cap == null ? '' : v.hoursBelow + ' hours under your cap');
+    setHTML('ev-now', 'Prix actuel <b>' + (v.price == null ? '—' : '€' + v.price.toFixed(2)) + '</b> /kWh');
+    setText('ev-below', v.cap == null ? '' : v.hoursBelow + ' heures sous votre plafond');
     var max = 0.1;
     v.prices.forEach(function (p) { if (p > max) max = p; });
     if (v.cap != null && v.cap > max) max = v.cap;
@@ -97,30 +97,30 @@ function evTab(ctx) {
       return '<i class="' + cls + '" style="height:' + Math.round(p / max * 100) + '%"></i>';
     }).join('');
     $('ev-cap').style.bottom = v.cap == null ? '0' : Math.round(v.cap / max * 100) + '%';
-    setText('ev-cap-l', v.cap == null ? '' : 'cap €' + v.cap.toFixed(2));
+    setText('ev-cap-l', v.cap == null ? '' : 'plafond €' + v.cap.toFixed(2));
     setHTML('ev-bars', '<span id="ev-cap" style="bottom:' + (v.cap == null ? 0 : Math.round(v.cap / max * 100)) + '%"><span id="ev-cap-l">' +
-      (v.cap == null ? '' : 'cap €' + v.cap.toFixed(2)) + '</span></span>' + bars);
+      (v.cap == null ? '' : 'plafond €' + v.cap.toFixed(2)) + '</span></span>' + bars);
     setHTML('ev-modes', v.modes.map(function (m) {
       return '<button class="seg' + (m === v.mode ? ' on' : '') + '" data-ev="mode" data-v="' + esc(m) + '">' + esc(m) + '</button>';
     }).join(''));
     setText('ev-plan-txt', v.plan);
     function step(key, label, note, value, dim) {
       return '<div class="step' + (dim ? ' dim' : '') + '"><span class="step-l">' + label + '<span>' + note + '</span></span>' +
-        '<button class="icon-btn" data-ev="' + key + '" data-dir="-1" aria-label="' + label + ' down">' + MINUS + '</button>' +
+        '<button class="icon-btn" data-ev="' + key + '" data-dir="-1" aria-label="' + label + ' moins">' + MINUS + '</button>' +
         '<span class="step-v">' + value + '</span>' +
-        '<button class="icon-btn" data-ev="' + key + '" data-dir="1" aria-label="' + label + ' up">' + PLUS + '</button></div>';
+        '<button class="icon-btn" data-ev="' + key + '" data-dir="1" aria-label="' + label + ' plus">' + PLUS + '</button></div>';
     }
     setHTML('ev-steps',
-      step('cap', 'Max price', 'Charge below this', v.cap == null ? '—' : '€' + v.cap.toFixed(2), false) +
-      step('ready', 'Ready by', 'Planned window only', v.ready || '—', !v.planned) +
-      step('hours', 'Charge hours', 'Planned window only', v.hours == null ? '—' : v.hours + ' h', !v.planned));
+      step('cap', 'Prix max', 'Charger en dessous', v.cap == null ? '—' : '€' + v.cap.toFixed(2), false) +
+      step('ready', 'Prête à', 'Fenêtre planifiée uniquement', v.ready || '—', !v.planned) +
+      step('hours', 'Heures de charge', 'Fenêtre planifiée uniquement', v.hours == null ? '—' : v.hours + ' h', !v.planned));
     function sw(key, label, on) {
       return '<div class="sw-row"><span>' + label + '</span><button class="sw" role="switch" data-ev="' + key +
         '" aria-checked="' + on + '" aria-label="' + label + '"></button></div>';
     }
-    setHTML('ev-sw', sw('smart', 'Smart charging', v.smart) + sw('solar', 'Charge on solar surplus', v.solar) +
-      sw('override', 'Ignore the price cap', v.override) +
-      '<div class="sw-row"><span>Solar surplus now</span><b>' + (v.surplus == null ? '—' : v.surplus.toFixed(1) + ' kW') + '</b></div>');
+    setHTML('ev-sw', sw('smart', 'Charge intelligente', v.smart) + sw('solar', 'Charger avec le surplus solaire', v.solar) +
+      sw('override', 'Ignorer le plafond de prix', v.override) +
+      '<div class="sw-row"><span>Surplus solaire actuel</span><b>' + (v.surplus == null ? '—' : v.surplus.toFixed(1) + ' kW') + '</b></div>');
   }
 
   if (ev) {

@@ -18,6 +18,13 @@ test('renderConfig does not duplicate the waste calendar', () => {
   assert.deepEqual(window.CONFIG.calendars, ['calendar.a']);
 });
 
+test('renderConfig works without a waste calendar', () => {
+  const window = {};
+  new Function('window', renderConfig({ ...base, waste: undefined }))(window);
+  assert.deepEqual(window.CONFIG.calendars, ['calendar.g']);
+  assert.equal(window.CONFIG.waste, '');
+});
+
 test('renderConfig rejects missing keys', () => {
   assert.throws(() => renderConfig({ ...base, token: '' }), /missing token/);
 });

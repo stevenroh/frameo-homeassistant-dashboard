@@ -107,7 +107,7 @@ public class MainActivity extends Activity {
       handler.removeCallbacks(goDark);
       new AlertDialog.Builder(MainActivity.this)
           .setTitle("Home HQ")
-          .setItems(new String[] {"Open launcher", "Android settings", "Wi-Fi settings", "Reload dashboard", "Update dashboard"},
+          .setItems(new String[] {"Ouvrir le lanceur", "Paramètres Android", "Paramètres Wi-Fi", "Recharger le tableau de bord", "Mettre à jour le tableau de bord"},
               (dialog, which) -> {
                 if (which == 0) openLauncher();
                 else if (which == 1) startActivity(new Intent(Settings.ACTION_SETTINGS));
@@ -115,7 +115,7 @@ public class MainActivity extends Activity {
                 else if (which == 3) web.reload();
                 else runUpdate();
               })
-          .setNegativeButton("Back to dashboard", null)
+          .setNegativeButton("Retour au tableau de bord", null)
           .setOnDismissListener(d -> scheduleSleep())
           .show();
     }
@@ -136,6 +136,11 @@ public class MainActivity extends Activity {
     applyDebugFlag(getIntent());
     applyHomeFlag(getIntent());
     keepNavigationEnabled();
+    // Android 6 asks once on the frame; `adb shell pm grant com.wesbos.homehq android.permission.READ_EXTERNAL_STORAGE`
+    // grants it without the dialog.
+    if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+      requestPermissions(new String[] {android.Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+    }
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
         | WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -272,7 +277,7 @@ public class MainActivity extends Activity {
       toast("No update address set. Use: adb shell am start -n com.wesbos.homehq/.MainActivity --es update_url http://<laptop>:8099");
       return;
     }
-    toast("Updating from " + base + " ...");
+    toast("Mise à jour depuis " + base + " ...");
     new Thread(() -> {
       try {
         String version = PageUpdater.update(getFilesDir(), base, getAssets());
@@ -280,11 +285,11 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> {
           handler.removeCallbacks(retry);
           web.loadUrl(startUrl());
-          Toast.makeText(this, "Updated to " + version, Toast.LENGTH_LONG).show();
+          Toast.makeText(this, "Mis à jour : " + version, Toast.LENGTH_LONG).show();
         });
       } catch (Exception e) {
         Log.w(TAG, "Update failed", e);
-        toast("Update failed: " + e.getMessage());
+        toast("Échec de la mise à jour : " + e.getMessage());
       }
     }, "page-update").start();
   }
@@ -294,7 +299,7 @@ public class MainActivity extends Activity {
     runOnUiThread(() -> {
       handler.removeCallbacks(retry);
       web.loadUrl(startUrl());
-      Toast.makeText(this, "Back to the built-in dashboard", Toast.LENGTH_LONG).show();
+      Toast.makeText(this, "Retour au tableau de bord intégré", Toast.LENGTH_LONG).show();
     });
   }
 
@@ -311,6 +316,7 @@ public class MainActivity extends Activity {
       applyUpdateUrl(i);
     }
 
+    @JavascriptInterface public String photos() { return own() ? FramePhotos.list() : "[]"; }
     @JavascriptInterface public void update() { if (own()) runUpdate(); }
     @JavascriptInterface public void reset() { if (own()) runReset(); }
   }
@@ -345,7 +351,7 @@ public class MainActivity extends Activity {
     offline.addView(offlineText);
 
     Button wifi = new Button(this);
-    wifi.setText("Open Wi-Fi settings");
+    wifi.setText("Ouvrir les paramètres Wi-Fi");
     wifi.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
     wifi.setPadding(dp(32), dp(16), dp(32), dp(16));
     wifi.setOnClickListener(v -> openWifiSettings());
@@ -363,11 +369,11 @@ public class MainActivity extends Activity {
 
   private void showOffline() {
     if (wifiConnected()) {
-      offlineTitle.setText("Can't reach the dashboard");
-      offlineText.setText("Wi-Fi is connected. Retrying every few seconds.");
+      offlineTitle.setText("Tableau de bord injoignable");
+      offlineText.setText("Le Wi-Fi est connecté. Nouvel essai toutes les quelques secondes.");
     } else {
-      offlineTitle.setText("Connect to Wi-Fi?");
-      offlineText.setText("The frame isn't on Wi-Fi. The dashboard comes back by itself once it is.");
+      offlineTitle.setText("Se connecter au Wi-Fi ?");
+      offlineText.setText("Le cadre n’est pas connecté au Wi-Fi. Le tableau de bord reviendra tout seul dès qu’il le sera.");
     }
     offline.setVisibility(View.VISIBLE);
   }

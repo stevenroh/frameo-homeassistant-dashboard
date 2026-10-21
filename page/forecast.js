@@ -13,32 +13,53 @@ function parseForecast(result, eid, n) {
       rain: x.precipitation_probability,
       mm: x.precipitation,
       wind: x.wind_speed,
+      gust: x.wind_gust_speed,
       bearing: x.wind_bearing,
     };
   });
 }
 
-var COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+var COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
 function compass(deg) { return COMPASS[Math.round((((deg % 360) + 360) % 360) / 45) % 8]; }
 
+// Feels-like temperature (the Australian apparent temperature: humidity warms, wind cools) for weather integrations
+// that do not report one, such as MeteoSwiss. T in °C, rh in %, wind in km/h.
+function apparentTemp(t, rh, kmh) {
+  var e = rh / 100 * 6.105 * Math.exp(17.27 * t / (237.7 + t));
+  return t + 0.33 * e - 0.70 * (kmh / 3.6) - 4.0;
+}
+
+// Dew point (Magnus formula), shown in place of gusts when the integration has none.
+function dewPoint(t, rh) {
+  var g = Math.log(rh / 100) + 17.27 * t / (237.7 + t);
+  return 237.7 * g / (17.27 - g);
+}
+
 // Weather entity attributes -> the six detail tiles on the Forecast tab (wind in km/h as HA reports it).
-function weatherDetails(w, today) {
+// gustSensor: an optional station sensor (MeteoSwiss's wind_gusts_peak), used before the entity's own gusts.
+function weatherDetails(w, today, gustSensor) {
   var a = (w && w.a) || {};
   function n(v, d) { return v == null ? '—' : String(Math.round(v * (d || 1)) / (d || 1)); }
   var wind = a.wind_speed;
-  var gust = a.wind_gust_speed;
-  var feels = a.apparent_temperature;
+  var gs = gustSensor && parseFloat(gustSensor.s);
+  var gust = isFinite(gs) ? gs : a.wind_gust_speed != null ? a.wind_gust_speed : today && today.gust != null ? today.gust : null;
   var hum = a.humidity;
+  var feels = a.apparent_temperature;
+  if (feels == null && a.temperature != null && hum != null && wind != null) feels = apparentTemp(a.temperature, hum, wind);
   var rain = today && today.rain != null ? today.rain : null;
+  var mm = today && today.mm != null ? today.mm : null;
+  var dew = gust == null && a.temperature != null && hum ? dewPoint(a.temperature, hum) : null;
   return [
-    { label: 'Feels like', value: feels == null ? '—' : Math.round(feels) + '°', unit: '', note: feels == null || a.temperature == null ? '' :
-      Math.round(feels) === Math.round(a.temperature) ? 'Same as the air' : (feels < a.temperature ? 'Colder than the air' : 'Warmer than the air'), tone: 'peach' },
-    { label: 'Wind', value: n(wind), unit: 'km/h', note: a.wind_bearing != null ? 'From ' + compass(a.wind_bearing) : '', tone: 'mint' },
-    { label: 'Gusts', value: n(gust), unit: 'km/h', note: '', tone: 'mint' },
-    { label: 'Humidity', value: n(hum), unit: '%', note: hum == null ? '' : hum >= 85 ? 'Damp' : hum <= 40 ? 'Dry' : 'Comfortable', tone: 'sky' },
-    { label: 'Rain today', value: rain == null ? '—' : String(rain), unit: '%',
-      note: today && today.mm != null ? today.mm + ' mm expected' : '', tone: 'sky' },
-    { label: 'Pressure', value: n(a.pressure), unit: 'hPa', note: '', tone: 'lav' },
+    { label: 'Ressenti', value: feels == null ? '—' : Math.round(feels) + '°', unit: '', note: feels == null || a.temperature == null ? '' :
+      Math.round(feels) === Math.round(a.temperature) ? 'Comme l’air' : (feels < a.temperature ? 'Plus froid que l’air' : 'Plus chaud que l’air'), tone: 'peach' },
+    { label: 'Vent', value: n(wind), unit: 'km/h', note: a.wind_bearing != null ? 'Du ' + compass(a.wind_bearing) : '', tone: 'mint' },
+    dew != null ? { label: 'Point de rosée', value: Math.round(dew) + '°', unit: '', note: a.temperature - dew < 2.5 ? 'Brouillard possible' : '', tone: 'mint' }
+      : { label: 'Rafales', value: n(gust), unit: 'km/h', note: '', tone: 'mint' },
+    { label: 'Humidité', value: n(hum), unit: '%', note: hum == null ? '' : hum >= 85 ? 'Humide' : hum <= 40 ? 'Sec' : 'Confortable', tone: 'sky' },
+    // No rain probability (MeteoSwiss): the expected millimetres instead.
+    rain == null && mm != null ? { label: 'Pluie aujourd’hui', value: String(mm), unit: 'mm', note: mm ? 'prévus' : 'Pas de pluie prévue', tone: 'sky' }
+      : { label: 'Pluie aujourd’hui', value: rain == null ? '—' : String(rain), unit: '%', note: mm != null ? mm + ' mm prévus' : '', tone: 'sky' },
+    { label: 'Pression', value: n(a.pressure), unit: 'hPa', note: '', tone: 'lav' },
   ];
 }
 
@@ -85,10 +106,10 @@ function forecastTab(ctx) {
     setHTML('fc-blob', weatherIcon(w.s, 96));
     setText('fc-temp', w.a.temperature != null ? Math.round(w.a.temperature) + '°' : '');
     setText('fc-cond', conditionLabel(w.s));
-    setText('fc-src', 'Updated ' + formatClock(new Date()));
-    setText('fc-today', today ? 'Today ' + Math.round(today.temp) + '° / ' + Math.round(today.low) + '°' +
-      (today.rain != null ? ' · rain ' + today.rain + '%' : '') : '');
-    setHTML('fc-details', weatherDetails(w, today).map(function (d) {
+    setText('fc-src', 'Mis à jour à ' + formatClock(new Date()));
+    setText('fc-today', today ? 'Aujourd’hui ' + Math.round(today.temp) + '° / ' + Math.round(today.low) + '°' +
+      (today.rain != null ? ' · pluie ' + today.rain + '%' : '') : '');
+    setHTML('fc-details', weatherDetails(w, today, cfg.gusts && store[cfg.gusts]).map(function (d) {
       return '<div class="det ' + d.tone + '"><span class="det-l">' + d.label + '</span><span class="det-v"><span class="det-n">' +
         d.value + '</span><span class="det-u">' + d.unit + '</span></span><span class="det-note">' + esc(d.note) + '</span></div>';
     }).join(''));
@@ -106,8 +127,8 @@ function forecastTab(ctx) {
       var width = Math.max(6, Math.round((d.temp - l) / span * 100));
       var wet = d.rain >= 60;
       return '<div class="day"><div class="day-head"><span class="day-name">' +
-        (dayDiff(d.date, now) === 1 ? 'Tomorrow' : DAYS[d.date.getDay()].slice(0, 3)) + '</span><span class="sub">' + d.date.getDate() + ' ' +
-        MONTHS[d.date.getMonth()].slice(0, 3) + '</span></div><div class="day-mid">' + weatherIcon(d.condition, 52) +
+        (dayDiff(d.date, now) === 1 ? 'Demain' : DAYS[d.date.getDay()].slice(0, 3)) + '</span><span class="sub">' + d.date.getDate() + ' ' +
+        MONTHS_SHORT[d.date.getMonth()] + '</span></div><div class="day-mid">' + weatherIcon(d.condition, 52) +
         '<span class="day-cond">' + conditionLabel(d.condition) + '</span></div><div class="day-temps"><span class="day-hi">' +
         Math.round(d.temp) + '°</span><span class="day-lo">' + (d.low != null ? Math.round(d.low) + '°' : '') +
         '</span></div><div class="day-bar"><i style="left:' + left + '%;width:' + Math.min(width, 100 - left) + '%"></i></div>' +
@@ -125,7 +146,7 @@ function forecastTab(ctx) {
     onConnecting: function (s) { state = s; },
     onView: function () { renderForecastView(); },
     onUpdate: function (u, changed) {
-      if (u.kind === 'entities' && changed.has(cfg.weather)) renderWeather();
+      if (u.kind === 'entities' && (changed.has(cfg.weather) || cfg.gusts && changed.has(cfg.gusts))) renderWeather();
       else if (u.kind === 'forecast') { forecast = u.days; renderWeather(); }
     },
   };

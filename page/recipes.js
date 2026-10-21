@@ -169,20 +169,20 @@ function recipesTab(ctx) {
     var pages = Math.max(1, Math.ceil(list.length / RC_PER));
     if (rcPage >= pages) rcPage = pages - 1;
     var slice = list.slice(rcPage * RC_PER, rcPage * RC_PER + RC_PER);
-    setText('rc-count', list.length ? (rcTab === 'all' && list.length >= 100 ? '100+ recipes' : list.length + ' recipes') : '');
+    setText('rc-count', list.length ? (rcTab === 'all' && list.length >= 100 ? '100+ recettes' : list.length + ' recettes') : '');
     setText('rc-page', pages > 1 ? (rcPage + 1) + ' / ' + pages : '');
     $('rc-prev').disabled = rcPage === 0;
     $('rc-next').disabled = rcPage >= pages - 1;
     var loading = rcTab === 'all' ? rcLoading : favTitles().some(function (t) { return !rcCache[t]; });
     setHTML('rc-grid', slice.length ? slice.map(function (r) {
       return '<button class="rcard" data-id="' + esc(r.id) + '"><span class="rimg">' +
-        (r.image ? '<img src="' + esc(thumbUrl(r.image, 320, 200)) + '" alt="">' : '') + '</span>' +
+        (r.image ? '<img src="' + esc(thumbUrl(r.image, 320, 200)) + '" alt="" onerror="this.style.display=\'none\'">' : '') + '</span>' +
         '<span class="rheart" data-fav="' + esc(r.id) + '">' + heart(isFav(r)) + '</span>' +
         '<span class="rbody"><span class="rtitle">' + esc(r.title) + '</span><span class="rtags">' +
         r.tags.slice(0, 3).map(function (t) { return '<span class="rtag">' + esc(tagLabel(t)) + '</span>'; }).join('') +
         '</span><span class="rmeta">' + r.ingredients.length + ' ingredients</span></span></button>';
-    }).join('') : '<div class="rc-empty">' + (rcFailed ? 'Could not reach Garfinho' : loading ? 'Loading…' :
-      rcTab === 'fav' ? 'No favourites yet' : 'No recipes match') + '</div>');
+    }).join('') : '<div class="rc-empty">' + (rcFailed ? 'Garfinho injoignable' : loading ? 'Chargement…' :
+      rcTab === 'fav' ? 'Pas encore de favoris' : 'Aucune recette trouvée') + '</div>');
   }
 
   function rcLoadContent(r) {
@@ -196,11 +196,11 @@ function recipesTab(ctx) {
     var i = list.indexOf(r);
     rcLoadContent(r);
     var c = rcContent[r.id];
-    setText('rd-pos', (i + 1) + ' of ' + list.length);
+    setText('rd-pos', (i + 1) + ' sur ' + list.length);
     setText('rd-title', r.title);
     $('rd-photo').style.backgroundImage = r.image ? 'url(' + thumbUrl(r.image, 640, 400) + ')' : 'none';
     setHTML('rd-heart', heart(isFav(r)));
-    $('rd-heart').setAttribute('aria-label', isFav(r) ? 'Remove from favourites' : 'Add to favourites');
+    $('rd-heart').setAttribute('aria-label', isFav(r) ? 'Retirer des favoris' : 'Ajouter aux favoris');
     $('rd-heart').className = 'rd-btn' + (isFav(r) ? ' fav' : '');
     // Quantities come with the text; until it loads (or if it has none) show the ingredient names.
     var groups = c && c.groups.length ? c.groups : [{ title: '', items: recipeIngredients(r) }];
@@ -218,15 +218,15 @@ function recipesTab(ctx) {
         html += '<button class="ing' + (d ? ' done' : '') + '" data-ing="' + k + '"><span class="ing-dot">' + (d ? CHECK : '') + '</span>' + esc(n) + '</button>';
       });
     });
-    setText('rd-ing-n', ready + ' of ' + total + ' ready');
+    setText('rd-ing-n', ready + ' sur ' + total + ' prêts');
     setHTML('rd-ings', html);
     var cur = rcStep[r.id] || 0;
     var steps = c ? c.steps : [];
-    setText('rd-step-n', steps.length ? 'Step ' + (Math.min(cur, steps.length - 1) + 1) + ' of ' + steps.length : '');
+    setText('rd-step-n', steps.length ? 'Étape ' + (Math.min(cur, steps.length - 1) + 1) + ' sur ' + steps.length : '');
     setHTML('rd-steps', steps.length ? steps.map(function (t, k) {
       var cls = k === cur ? ' now' : k < cur ? ' past' : '';
       return '<button class="step' + cls + '" data-step="' + k + '"><span class="step-n">' + (k < cur ? CHECK : k + 1) + '</span><span class="step-t">' + esc(t) + '</span></button>';
-    }).join('') + (c ? c.notes.map(function (t) { return '<span class="rd-note">' + esc(t) + '</span>'; }).join('') : '') : '<div class="rc-empty-s">' + (c === undefined ? 'Loading the method…' : c === null ? 'Could not load the method' : 'No instructions for this recipe') + '</div>');
+    }).join('') + (c ? c.notes.map(function (t) { return '<span class="rd-note">' + esc(t) + '</span>'; }).join('') : '') : '<div class="rc-empty-s">' + (c === undefined ? 'Chargement de la préparation…' : c === null ? 'Impossible de charger la préparation' : 'Pas d’instructions pour cette recette') + '</div>');
     $('rd-prev').disabled = i <= 0;
     $('rd-next').disabled = i >= list.length - 1;
   }
@@ -242,7 +242,7 @@ function recipesTab(ctx) {
     rcCache[r.title] = r;
     sendAll(serviceCall(state, 'garfinho', on ? 'remove_favorite' : 'add_favorite', null, { recipe_id: r.id }).send);
     setTimeout(function () { if (state) sendAll(serviceCall(state, 'garfinho', 'refresh', null, {}).send); }, 1200);
-    toast(on ? 'Removed from favourites' : 'Added to favourites');
+    toast(on ? 'Retiré des favoris' : 'Ajouté aux favoris');
     renderRecipes();
   }
 

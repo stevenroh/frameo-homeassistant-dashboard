@@ -1,4 +1,4 @@
 <resources>
-    <string name="navigation_label">Home HQ navigation</string>
-    <string name="navigation_description">Shows floating Back and Dashboard buttons outside Home HQ, for frames without a navigation bar. Drag the dots to move the buttons. Does not read screen content.</string>
+    <string name="navigation_label">Navigation Home HQ</string>
+    <string name="navigation_description">Affiche des boutons flottants Retour et Tableau de bord hors de Home HQ, pour les cadres sans barre de navigation. Faites glisser les points pour déplacer les boutons. Ne lit pas le contenu de l’écran.</string>
 </resources>

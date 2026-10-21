@@ -56,7 +56,7 @@ public class NavigationService extends AccessibilityService {
     handle.setTextColor(Color.LTGRAY);
     handle.setTextSize(26);
     handle.setGravity(Gravity.CENTER);
-    handle.setContentDescription("Drag navigation buttons");
+    handle.setContentDescription("Déplacer les boutons de navigation");
     bar.addView(handle, new LinearLayout.LayoutParams(dp(40), dp(48)));
     handle.setOnTouchListener(new View.OnTouchListener() {
       float startX, startY;
@@ -79,8 +79,8 @@ public class NavigationService extends AccessibilityService {
         return true;
       }
     });
-    addButton("Back", view -> performGlobalAction(GLOBAL_ACTION_BACK));
-    addButton("Dashboard", view -> startActivity(new Intent(this, MainActivity.class)
+    addButton("Retour", view -> performGlobalAction(GLOBAL_ACTION_BACK));
+    addButton("Tableau de bord", view -> startActivity(new Intent(this, MainActivity.class)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)));
     updateVisibility();
   }

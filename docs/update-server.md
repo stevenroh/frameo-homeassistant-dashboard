@@ -6,7 +6,7 @@ After the first APK install the frame can fetch new page files over wifi. It nee
 | Option | When | Command |
 | --- | --- | --- |
 | Quick | Trying changes from your computer; the frame fetches only while it runs | `./serve.sh` |
-| Permanent | An always-on host, publishing from any machine | `deploy/create-lxc.sh` once, then `./publish.sh` |
+| Permanent | An always-on Linux box, publishing from any machine | `./publish.sh` |
 | Your own | Any static web server you already run | copy `build/assets/` (below) |
 
 Java changes (sleep, menu, permissions) still need a new APK.
@@ -22,42 +22,31 @@ PORT=9000 ./serve.sh    # another port
 It runs the tests, renders `config.js` from `secrets/config.json`, copies `page/*` to `build/assets/`, writes
 `manifest.json`, and starts `python3 -m http.server`. It prints the address to give the frame. Rerun it after an edit.
 
-## Permanent: an LXC on Proxmox
+## Permanent: a small Linux box
 
-`deploy/create-lxc.sh` makes an unprivileged Alpine container (hostname `frame-files`, 1 core, 128 MB, 1 GB disk,
-starts on boot) that serves `/srv/frame` with Caddy on port 8099. Caddy sends `Cache-Control: no-store`, so a browser
-checking the files never sees an old copy.
+Any always-on Linux machine on your network (a Raspberry Pi, a NAS, a VM) can hold the files. On it, install Caddy,
+rsync and an SSH server, create `/srv/frame`, give the publishing machine's SSH key access to it, and serve it on port
+8099 with this `/etc/caddy/Caddyfile`:
 
-1. On the Proxmox host, as root, fetch an Alpine template if there is none:
+```
+:8099 {
+	root * /srv/frame
+	file_server
+	header Cache-Control no-store
+}
+```
 
-   ```sh
-   pveam update && pveam available | grep alpine-3
-   pveam download local alpine-3.18-default_20230607_amd64.tar.xz   # or the newest listed
-   ```
+`Cache-Control: no-store` makes sure a browser checking the files never sees an old copy. Then, from your computer
+(Node and rsync installed, `secrets/config.json` filled in):
 
-2. Copy the script and the public key of the machine you will publish from to the host, then run it:
+```sh
+./publish.sh user@<ip>                 # page files only; the frame keeps its own config.js
+./publish.sh user@<ip> --with-config   # also publish config.js
+```
 
-   ```sh
-   ./create-lxc.sh ~/id_ed25519.pub <ip> <gateway>        # key, container IP, gateway
-   ./create-lxc.sh ~/id_ed25519.pub <ip> <gateway> 150    # same, with container id 150
-   ```
-
-   It assumes the defaults of a stock install: storage `local` for templates, `local-lvm` for disks, bridge `vmbr0`,
-   a `/24` network. Edit the `pct create` line if yours differ. It ends with `Ready: http://<ip>:8099/`.
-
-3. From your computer (Node and rsync installed, `secrets/config.json` filled in):
-
-   ```sh
-   ./publish.sh root@<ip>                 # page files only; the frame keeps its own config.js
-   ./publish.sh root@<ip> --with-config   # also publish config.js
-   ```
-
-   It runs the tests, builds `build/assets/` like `serve.sh`, and rsyncs it to `/srv/frame/` with `--delete`. Without `--with-config` it also deletes a `config.js`
-   left there by an earlier publish. It prints
-   the published version (`<git short sha> <UTC time>`).
-
-No Proxmox: any small Linux box works the same way. Install Caddy, rsync and an SSH server, use the Caddyfile from the script, give your key
-access to `/srv/frame`, and use `./publish.sh user@host`.
+It runs the tests, builds `build/assets/` like `serve.sh`, and rsyncs it to `/srv/frame/` with `--delete`. Without
+`--with-config` it also deletes a `config.js` left there by an earlier publish. It prints the published version
+(`<git short sha> <UTC time>`).
 
 ## Your own web server
 
@@ -104,6 +93,6 @@ the frame once, through the APK or one `--with-config` publish, and publish page
 | --- | --- |
 | No update address set | Run the `adb ... --es update_url` command above |
 | Update failed: HTTP 404 for manifest.json | The address points at the folder holding `manifest.json`; publish ran without errors |
-| Update failed: connect timed out (or similar) | Open `http://<host>:8099/manifest.json` from another device on the frame's wifi; the container is running (`pct status <id>`) |
+| Update failed: connect timed out (or similar) | Open `http://<host>:8099/manifest.json` from another device on the frame's wifi; the server is running |
 | Update failed: manifest has no index.html | `manifest.json` was written or copied by hand without `index.html`; rebuild with `publish.sh` or `serve.sh` |
 | Updated, but the old page still shows | A page URL was saved with `--es url`; the kiosk loads that instead of the updated files. `pm clear com.wesbos.homehq` removes it (and the update address, so set that again) |
