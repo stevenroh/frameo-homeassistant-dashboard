@@ -421,12 +421,20 @@ public class MainActivity extends Activity {
     }
   }
 
+  /**
+   * Leaves for the other Home app (Frameo on a Frameo frame). Opened through its app-drawer entry when it has one:
+   * Frameo's Home activity only waits for its start-up and then hands over to "the Home app", which is the kiosk
+   * once the kiosk has been picked as Home, so going through it bounced straight back here.
+   */
   private void openLauncher() {
     Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
     for (ResolveInfo info : getPackageManager().queryIntentActivities(home, 0)) {
       String pkg = info.activityInfo.packageName;
       if (pkg.equals(getPackageName()) || pkg.equals("com.android.settings")) continue;
-      startActivity(new Intent(home).setComponent(new ComponentName(pkg, info.activityInfo.name)));
+      Intent open = getPackageManager().getLaunchIntentForPackage(pkg);
+      if (open == null) open = new Intent(home).setComponent(new ComponentName(pkg, info.activityInfo.name));
+      Log.i(TAG, "Leaving for " + open.getComponent());
+      startActivity(open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
       return;
     }
     startActivity(new Intent(Settings.ACTION_SETTINGS));
