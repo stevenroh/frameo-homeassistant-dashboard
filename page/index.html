@@ -175,10 +175,9 @@
   #mc-artist, #mc-on { font-size: 15px; color: var(--on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #mc-on { color: var(--violet); }
   #mc-ctl { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
-  #mc-volrow { flex: 1; min-width: 0; height: 56px; border-radius: 28px; background: var(--surface-container-high); padding: 0 14px 0 4px;
+  #mc-volrow { flex: 1; min-width: 0; height: 56px; border-radius: 28px; background: var(--surface-container-high); padding: 0 4px;
     display: flex; align-items: center; gap: 6px; }
   #mc-volrow .range { flex: 1; min-width: 0; }
-  #mc-vol-v { width: 44px; text-align: right; font-size: 16px; font-weight: 500; }
   #mc-ctl .mu-btn { width: 56px; height: 56px; border-radius: 28px; }
   #mc-ctl #mc-play { width: 80px; background: var(--violet); color: #ffffff; }
   html.night #mc-ctl #mc-play { color: #24124a; }
@@ -461,10 +460,9 @@
   #mu-fill { display: block; width: 0; height: 8px; border-radius: 4px; background: var(--violet); }
   #mu-times { display: flex; justify-content: space-between; font-size: 14px; color: var(--on-surface-variant); margin-top: 6px; }
   #mu-ctl { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 18px; }
-  #mu-volrow { display: flex; align-items: center; gap: 8px; height: 64px; margin-top: 20px; padding: 0 16px 0 8px; border-radius: 32px;
+  #mu-volrow { display: flex; align-items: center; gap: 8px; height: 64px; margin-top: 20px; padding: 0 8px; border-radius: 32px;
     background: var(--surface-container-high); }
   #mu-volrow .range { flex: 1; min-width: 0; }
-  #mu-vol-v { width: 48px; text-align: right; font-size: 17px; font-weight: 500; }
   .mu-btn { width: 64px; height: 64px; border-radius: 32px; background: var(--surface-container-high); color: var(--on-surface); display: flex; align-items: center; justify-content: center; }
   #mu-play { width: 96px; height: 80px; border-radius: 28px; background: var(--violet); color: #ffffff; }
   html.night #mu-play { color: #24124a; }
@@ -666,7 +664,6 @@
           <button id="mc-vdown" class="icon-btn" aria-label="Baisser le volume"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M16 12h4"></path></svg></button>
           <input id="mc-vol-r" class="range" type="range" min="0" max="100" step="1" value="0" aria-label="Volume">
           <button id="mc-vup" class="icon-btn" aria-label="Monter le volume"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M15.5 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path></svg></button>
-          <span id="mc-vol-v"></span>
         </div>
         <button id="mc-prev" class="mu-btn" aria-label="Précédent"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 6l-9 6 9 6z"></path><rect x="5.5" y="6" width="2.5" height="12" rx="1"></rect></svg></button>
         <button id="mc-play" class="mu-btn" aria-label="Lecture"></button>
@@ -751,7 +748,6 @@
         <button id="mu-vdown" class="icon-btn" aria-label="Baisser le volume"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M16 12h4"></path></svg></button>
         <input id="mu-vol-r" class="range" type="range" min="0" max="100" step="1" value="0" aria-label="Volume">
         <button id="mu-vup" class="icon-btn" aria-label="Monter le volume"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M15.5 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path></svg></button>
-        <span id="mu-vol-v"></span>
       </div>
       <span class="eyebrow" style="margin-top:auto">LIRE SUR</span>
       <div id="mu-spk"></div>

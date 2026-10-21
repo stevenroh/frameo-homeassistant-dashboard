@@ -58,6 +58,15 @@ boot, without a crash before it. It is kept for frames whose firmware allows it;
 
 ### Screen sleep
 
+The screen goes dark after 5 minutes without a touch; a tap wakes it. To change the delay (kept across restarts):
+
+```sh
+adb shell am start -n com.wesbos.homehq/.MainActivity --ei sleep_minutes 30   # after 30 minutes
+adb shell am start -n com.wesbos.homehq/.MainActivity --ei sleep_minutes 0    # never
+```
+
+Settings' **Éteindre l'écran** puts it to sleep right away.
+
 The kiosk keeps the screen on, so Android's own timeout never fires. After `sleep_minutes` without a touch it puts a
 black cover over the page and writes `0` to `/sys/class/backlight/*/brightness` through `su`. The touchscreen stays on:
 the first tap only wakes the screen and is not passed to the page, so it cannot toggle a light by accident. On wake the

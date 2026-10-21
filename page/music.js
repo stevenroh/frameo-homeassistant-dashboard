@@ -200,7 +200,6 @@ function musicTab(ctx) {
       NOTE.replace('<svg', '<svg style="display:none"') : NOTE);
     var name = speakers.filter(function (m) { return m.id === speaker; })[0];
     setText(p + '-on', 'Sur ' + (name ? name.name : ''));
-    setText(p + '-vol-v', v.volume == null ? '—' : v.volume + '%');
     if (!volDrag) {
       var r = $(p + '-vol-r');
       r.disabled = v.volume == null;
@@ -297,7 +296,6 @@ function musicTab(ctx) {
       r.addEventListener('input', function () {
         volDrag = true;
         r.style.setProperty('--v', r.value + '%');
-        setText(p + '-vol-v', r.value + '%');
       });
       r.addEventListener('change', function () {
         volDrag = false;

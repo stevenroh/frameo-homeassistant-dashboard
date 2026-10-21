@@ -150,7 +150,7 @@ Full setup, other hosts and troubleshooting: [docs/update-server.md](docs/update
 - `kiosk/`: the Android WebView shell, based on `dashboard/kiosk` of wesbos/photo-frame-dashboard (6cbc255), with:
   the bundled page as the default URL; a menu on a two-finger hold (1.5 s, 120 px slop) or a one-finger 3 s hold on the
   empty bottom of the rail; touch logging (tag `HomeHQ`); screen sleep after 5 idle minutes through `su`
-  (`--ei sleep_minutes N`, `0` = never) with a first tap that only wakes; and `PageUpdater` for over-the-air updates.
+  (`--ei sleep_minutes N`, `0` = never; see [docs/frame.md](docs/frame.md#screen-sleep)) with a first tap that only wakes; and `PageUpdater` for over-the-air updates.
 - `tools/`: `render-config.mjs` (config to `config.js`), `manifest.mjs` (the update manifest).
 - `test/`: unit tests with recorded HA responses. `npm test` (uses `TZ=Europe/Amsterdam`).
 - `homeassistant/todo-reminders.yaml`: push notification when a to-do comes due (edit the list and notify targets).
