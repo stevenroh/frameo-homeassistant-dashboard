@@ -164,8 +164,8 @@ Adding an item needs an on-screen keyboard on the frame; without one, add items 
 
 ## Quirks
 
-- [docs/frame.md](docs/frame.md): the frame's hardware limits and what the kiosk app does about them (sleep, menu,
-  offline screen, debugging, navigation bar, updates).
+- [docs/frame.md](docs/frame.md): the frame's hardware limits and what the kiosk app does about them (start at boot as
+  the Home app, sleep, menu, offline screen, debugging, navigation bar, updates).
 - [docs/home-assistant.md](docs/home-assistant.md): websocket protocol, dates and offsets, and the integrations.
 - [docs/spotifyplus.md](docs/spotifyplus.md): Spotify search and library on the Music tab.
 - [docs/update-server.md](docs/update-server.md): the update file server (serve.sh, an always-on Linux box, or your own host).

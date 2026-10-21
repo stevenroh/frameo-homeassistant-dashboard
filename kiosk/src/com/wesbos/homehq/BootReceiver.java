@@ -12,7 +12,8 @@ import android.util.Log;
  * Opens the dashboard when the frame has booted, on top of Frameo (which stays the Home app, so Quitter and the
  * menu's launcher entry still lead back to it). Frameo finishes starting after the boot broadcast and comes to the
  * front, so the dashboard is opened again 20 s and 60 s later; when it is already in front that does nothing. Off with: adb shell am start -n com.wesbos.homehq/.MainActivity
- * --ez autostart false. Android only delivers this to an app that has been opened once since it was installed.
+ * --ez autostart false. Android only delivers this to an app that has been opened once since it was installed, and
+ * the Denver frame's firmware refuses it ("process is bad"): there the kiosk starts at boot as the Home app instead.
  */
 public final class BootReceiver extends BroadcastReceiver {
   @Override

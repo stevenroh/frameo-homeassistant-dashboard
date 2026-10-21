@@ -51,10 +51,12 @@ import java.io.File;
  *   <update_url>/manifest.json into files/page/ and loads them instead of the bundled ones. Set the address with
  *     adb shell am start -n com.wesbos.homehq/.MainActivity --es update_url http://<laptop>:8099
  * - Set the saved URL, used on every later launch: adb shell am start -n com.wesbos.homehq/.MainActivity --es url <url>
- * - Starts by itself after a boot (BootReceiver); --ez autostart false turns that off, true back on.
- * - Offer the kiosk as a Home app (--ez home false undoes it), then pick it:
+ * - Start at boot as the Home app (--ez home false undoes it); on Android 6 pick it in the dialog the Home key opens,
+ *   Android 7+ can set it directly (docs/frame.md, Start at boot):
  *     adb shell am start -n com.wesbos.homehq/.MainActivity --ez home true
- *     adb shell cmd package set-home-activity com.wesbos.homehq/.Home
+ *     adb shell input keyevent KEYCODE_HOME
+ *     adb shell cmd package set-home-activity com.wesbos.homehq/.Home   (Android 7+)
+ * - BootReceiver also opens it after a boot where the firmware allows it; --ez autostart false turns that off.
  */
 public class MainActivity extends Activity {
   static final String TAG = "HomeHQ";

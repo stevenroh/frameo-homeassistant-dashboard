@@ -29,10 +29,32 @@ these; [TABLET.md](../TABLET.md) covers the port.
 | Offline | A native screen instead of WebView's error page |
 | Boot without Wi-Fi | A failed load retries every 5 s |
 | Remote debugging | Only with `--ez debug true` |
-| Start at boot | On by default (`BootReceiver`); `--ez autostart false` turns it off |
-| Home app | `--ez home true`, then `cmd package set-home-activity com.wesbos.homehq/.Home` (Android 7+) |
+| Start at boot | As the Home app (below); `BootReceiver` also tries, but this frame's firmware refuses it |
+| Home app | `--ez home true`, then pick Home HQ once (below); `--ez home false` gives Home back to Frameo |
 | Navigation bar | `NavigationService`, an accessibility service, for frames without one |
 | Page updates | `PageUpdater`, see [update-server.md](update-server.md) |
+
+### Start at boot
+
+The dependable way is to make the kiosk the Home app: Android opens the Home app at every boot, before anything else.
+Frameo keeps running behind it and still receives photos.
+
+```sh
+adb shell am start -n com.wesbos.homehq/.MainActivity --ez home true   # offer the kiosk as a Home app
+adb shell input keyevent KEYCODE_HOME                                  # the frame asks which Home app to use
+```
+
+On the frame, tap **Home HQ**, then **Toujours** (Always). `adb reboot` to check: the dashboard comes up without
+Frameo showing first. Android 7 and later can pick it without the dialog:
+`adb shell cmd package set-home-activity com.wesbos.homehq/.Home`.
+
+Settings' **Quitter** and the menu's **Ouvrir le lanceur** still open Frameo: they look for a Home app other than the
+kiosk. Back to Frameo as Home: `--ez home false`, then the Home key again if the frame asks.
+
+`BootReceiver` (on by default, `--ez autostart false` turns it off) opens the dashboard on `BOOT_COMPLETED`, again at
+20 s and 60 s so it lands in front of Frameo. On the Denver `PFF_1037` the firmware does not start it:
+logcat shows `Unable to launch app com.wesbos.homehq/… for broadcast … BOOT_COMPLETED …: process is bad` on every
+boot, without a crash before it. It is kept for frames whose firmware allows it; as the Home app it is not needed.
 
 ### Screen sleep
 
