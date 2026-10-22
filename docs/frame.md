@@ -25,7 +25,7 @@ these; [TABLET.md](../TABLET.md) covers the port.
 | --- | --- |
 | Full screen | Immersive mode hides the status and navigation bars |
 | Menu (launcher, Settings, Wi-Fi, reload, update) | Hold two fingers still for 1.5 s (120 px slop), or one finger for 3 s on the empty bottom of the left rail |
-| Screen sleep | After `sleep_minutes` (default 5, `--ei sleep_minutes N`, 0 = never) |
+| Screen sleep | After `sleep_minutes` (default 5, `--ei sleep_minutes N`, 0 = never), and overnight on a schedule |
 | Offline | A native screen instead of WebView's error page |
 | Boot without Wi-Fi | A failed load retries every 5 s |
 | Remote debugging | Only with `--ez debug true` |
@@ -66,6 +66,17 @@ adb shell am start -n com.wesbos.homehq/.MainActivity --ei sleep_minutes 0    # 
 ```
 
 Settings' **Éteindre l'écran** puts it to sleep right away.
+
+**Night schedule**, like Frameo's: Settings, **Veille la nuit**, then the off and on times (30-minute steps). The screen
+goes dark at the off time and lights up again at the on time; a touch at night lights it for one minute. The kiosk
+app keeps the schedule, so it survives updates and restarts. Over ADB:
+
+```sh
+adb shell am start -n com.wesbos.homehq/.MainActivity --es night_off 22:00 --es night_on 07:00
+adb shell am start -n com.wesbos.homehq/.MainActivity --es night_off ""      # off
+```
+
+It waits for network time (the frame boots at 2021-05-15), and runs while the dashboard is in front.
 
 The kiosk keeps the screen on, so Android's own timeout never fires. After `sleep_minutes` without a touch it puts a
 black cover over the page and writes `0` to `/sys/class/backlight/*/brightness` through `su`. The touchscreen stays on:

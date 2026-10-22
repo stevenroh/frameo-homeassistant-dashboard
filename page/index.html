@@ -561,6 +561,12 @@
   .range:disabled::-webkit-slider-runnable-track { background: var(--surface-container-highest); }
   .range:disabled::-webkit-slider-thumb { background: var(--outline); }
   .sheet-foot { display: flex; justify-content: flex-end; margin-top: 24px; }
+  #set-night-times { display: flex; gap: 12px; }
+  #set-night-times.off { opacity: 0.4; pointer-events: none; }
+  .nt { flex: 1; display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 6px 0 18px; border-radius: 28px;
+    background: var(--surface-container-high); font-size: 16px; }
+  .nt span { flex: 1; color: var(--on-surface-variant); }
+  .nt b { width: 64px; text-align: center; font-size: 20px; font-weight: 500; }
   .swatches { display: flex; gap: 14px; padding: 4px; }
   .swatch { width: 52px; height: 52px; border-radius: 26px; border: 0; flex-shrink: 0; }
   .swatch.on { outline: 3px solid var(--on-surface); outline-offset: 3px; }
@@ -848,6 +854,11 @@
   <input id="set-url" type="text" maxlength="200" placeholder="http://<ip>:8099" autocomplete="off" autocapitalize="off" aria-label="Adresse de mise à jour">
   <div class="sheet-lbl" style="margin:20px 0 8px"><span>Cadre</span></div>
   <div style="display:flex;gap:12px"><button id="set-exit" class="outlined">Quitter vers Frameo</button><button id="set-off" class="outlined">Éteindre l’écran</button><button id="set-power" class="outlined">Éteindre le cadre</button></div>
+  <div id="set-night-box">
+    <div class="sheet-lbl" style="margin:20px 0 8px;align-items:center"><span>Veille la nuit (écran éteint, rallumé le matin)</span>
+      <button id="set-night" class="sw" role="switch" aria-checked="false" aria-label="Veille la nuit"></button></div>
+    <div id="set-night-times"></div>
+  </div>
   <div class="sheet-foot" style="gap:12px"><button id="set-reset" class="outlined" style="margin-right:auto">Version intégrée</button><button id="set-close" class="outlined">Fermer</button><button id="set-update" class="tonal">Mettre à jour</button></div>
 </div>
 <div id="sheet" style="display:none" role="dialog" aria-labelledby="sheet-name">

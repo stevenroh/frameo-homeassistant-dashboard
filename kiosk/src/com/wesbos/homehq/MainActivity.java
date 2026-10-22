@@ -56,6 +56,8 @@ import java.io.File;
  *     adb shell am start -n com.wesbos.homehq/.MainActivity --ez home true
  *     adb shell input keyevent KEYCODE_HOME
  *     adb shell cmd package set-home-activity com.wesbos.homehq/.Home   (Android 7+)
+ * - Night schedule (screen off overnight, on again in the morning), also in the page's Settings:
+ *     adb shell am start -n com.wesbos.homehq/.MainActivity --es night_off 22:00 --es night_on 07:00
  * - BootReceiver also opens it after a boot where the firmware allows it; --ez autostart false turns that off.
  */
 public class MainActivity extends Activity {
@@ -73,6 +75,7 @@ public class MainActivity extends Activity {
   static final float HOLD_RIGHT = 80, HOLD_TOP = 360;
   static final String PREF_SLEEP = "sleep_minutes";
   static final String PREF_AUTOSTART = "autostart";
+  static final String PREF_NIGHT_OFF = "night_off", PREF_NIGHT_ON = "night_on";
   static final String PREF_UPDATE_URL = "update_url";
   static final int DEFAULT_SLEEP_MINUTES = 5;
   // The app theme is the old fullscreen one, whose dialogs look pre-Material; dialogs ask for Material explicitly.
@@ -197,6 +200,7 @@ public class MainActivity extends Activity {
     backlight = findBacklight();
     applySleepFlag(getIntent());
     applyAutostartFlag(getIntent());
+    applyNightFlag(getIntent());
     applyUpdateUrl(getIntent());
     setContentView(root);
 
@@ -209,6 +213,9 @@ public class MainActivity extends Activity {
     super.onResume();
     NavigationService.setDashboardVisible(true);
     wake();
+    wasNight = false;
+    handler.removeCallbacks(nightTick);
+    handler.post(nightTick); // already night: dark straight away
   }
 
   @Override
@@ -217,6 +224,7 @@ public class MainActivity extends Activity {
     if (dark) wake();
     // wake() re-arms the timer; nothing may darken the screen while another app is in front.
     handler.removeCallbacks(goDark);
+    handler.removeCallbacks(nightTick);
     NavigationService.setDashboardVisible(false);
     super.onPause();
   }
@@ -229,6 +237,7 @@ public class MainActivity extends Activity {
     applyHomeFlag(intent);
     applySleepFlag(intent);
     applyAutostartFlag(intent);
+    applyNightFlag(intent);
     applyUpdateUrl(intent);
     String url = urlFrom(intent);
     if (url != null) {
@@ -330,6 +339,21 @@ public class MainActivity extends Activity {
     @JavascriptInterface public void reset() { if (own()) runReset(); }
     /** Settings' Quitter: the same as the menu's launcher entry (on a Frameo, its home screen is usually Frameo). */
     @JavascriptInterface public void exit() { if (own()) runOnUiThread(MainActivity.this::openLauncher); }
+    /** Settings' night schedule: "22:00-07:00", or "" when off. */
+    @JavascriptInterface public String nightSchedule() {
+      if (!own()) return "";
+      android.content.SharedPreferences p = getSharedPreferences(PREFS, MODE_PRIVATE);
+      String off = p.getString(PREF_NIGHT_OFF, "");
+      return off.isEmpty() ? "" : off + "-" + p.getString(PREF_NIGHT_ON, "");
+    }
+
+    /** Both "HH:MM" to set it, empty to turn it off. */
+    @JavascriptInterface public void setNightSchedule(String off, String on) {
+      if (!own()) return;
+      final boolean valid = NightSchedule.minutes(off) >= 0 && NightSchedule.minutes(on) >= 0;
+      runOnUiThread(() -> setNight(valid ? off : "", valid ? on : ""));
+    }
+
     /** Settings' Éteindre l'écran: the screen sleep, now; a touch wakes it. */
     @JavascriptInterface public void screenOff() {
       if (own()) runOnUiThread(() -> { handler.removeCallbacks(goDark); goDark.run(); });
@@ -571,8 +595,52 @@ public class MainActivity extends Activity {
 
   private void scheduleSleep() {
     handler.removeCallbacks(goDark);
-    int minutes = sleepMinutes();
+    // At night a touch only lights the screen for a minute, even with the idle sleep off.
+    int minutes = isNight() ? 1 : sleepMinutes();
     if (minutes > 0) handler.postDelayed(goDark, minutes * 60000L);
+  }
+
+  // --- night schedule: screen off from night_off to night_on (e.g. 22:00 to 07:00), like Frameo's sleep schedule ---
+
+  private boolean wasNight;
+
+  /** Inside the night window; never before network time (the frame boots at 2021-05-15 without it). */
+  private boolean isNight() {
+    java.util.Calendar now = java.util.Calendar.getInstance();
+    if (now.get(java.util.Calendar.YEAR) < 2025) return false;
+    android.content.SharedPreferences p = getSharedPreferences(PREFS, MODE_PRIVATE);
+    return NightSchedule.inNight(now.get(java.util.Calendar.HOUR_OF_DAY) * 60 + now.get(java.util.Calendar.MINUTE),
+        NightSchedule.minutes(p.getString(PREF_NIGHT_OFF, "")), NightSchedule.minutes(p.getString(PREF_NIGHT_ON, "")));
+  }
+
+  /** Every minute while in front: dark when the night starts, lit again when it ends. */
+  private final Runnable nightTick = new Runnable() {
+    @Override
+    public void run() {
+      boolean night = isNight();
+      if (night != wasNight) {
+        wasNight = night;
+        Log.i(TAG, night ? "Night: screen off" : "Morning: screen on");
+        if (night) { handler.removeCallbacks(goDark); goDark.run(); } else wake();
+      }
+      handler.postDelayed(this, 60000);
+    }
+  };
+
+  private void setNight(String off, String on) {
+    getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(PREF_NIGHT_OFF, off).putString(PREF_NIGHT_ON, on).apply();
+    Log.i(TAG, "Night schedule: " + (off.isEmpty() ? "off" : off + " to " + on));
+    handler.removeCallbacks(nightTick);
+    wasNight = false;
+    handler.post(nightTick);
+  }
+
+  /** --es night_off 22:00 --es night_on 07:00 sets the schedule; an empty night_off turns it off. */
+  private void applyNightFlag(Intent intent) {
+    if (intent == null || !intent.hasExtra(PREF_NIGHT_OFF)) return;
+    String off = intent.getStringExtra(PREF_NIGHT_OFF), on = intent.getStringExtra(PREF_NIGHT_ON);
+    if (NightSchedule.minutes(off) < 0 || NightSchedule.minutes(on) < 0) setNight("", "");
+    else setNight(off, on);
   }
 
   private void applySleepFlag(Intent intent) {
