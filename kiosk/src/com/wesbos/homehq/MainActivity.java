@@ -358,11 +358,15 @@ public class MainActivity extends Activity {
       runOnUiThread(() -> setNight(valid ? off : "", valid ? on : ""));
     }
 
-    /** Caméras tab: play an RTSP stream in slot 0-3 over the page's rectangle (CSS px of a pageWidth-wide page). */
-    @JavascriptInterface public void playRtsp(int slot, String name, String url, float x, float y, float w, float h,
-        float pageWidth) {
+    /**
+     * Caméras tab: play an RTSP stream in slot 0-3 over the page's rectangle (CSS px of a pageWidth-wide page);
+     * fallback (or "") plays if url fails.
+     */
+    @JavascriptInterface public void playRtsp(int slot, String name, String url, String fallback, float x, float y,
+        float w, float h, float pageWidth) {
       if (!own() || url == null || !url.startsWith("rtsp://")) return;
-      runOnUiThread(() -> camera.play(slot, name == null ? "" : name, url, x, y, w, h, pageWidth));
+      String alt = fallback != null && fallback.startsWith("rtsp://") ? fallback : "";
+      runOnUiThread(() -> camera.play(slot, name == null ? "" : name, url, alt, x, y, w, h, pageWidth));
     }
 
     /** One slot, or every one with -1. */

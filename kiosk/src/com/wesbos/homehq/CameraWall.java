@@ -15,7 +15,7 @@ import android.widget.VideoView;
 /**
  * The Caméras tab's videos: a page cannot play RTSP, so each camera gets Android's own player (VideoView, hardware
  * H.264) laid over the rectangle the page reserves for it, up to four (the 2x2 grid). The players sit above the page,
- * so this class also draws each camera's name and state and catches taps, which it hands to the page as
+ * so this class also shows each stream's state (until it plays) and catches taps, which it hands to the page as
  * window.camTap(slot) (the page then makes that camera full screen or goes back to the grid). Moving a playing
  * camera to a new rectangle keeps its stream. Everything stops while the screen sleeps or the app is in the background
  * and comes back from the same requests; a failed or ended stream retries every 10 s.
@@ -40,8 +40,11 @@ final class CameraWall {
     }
   }
 
-  /** The rectangle is in the page's CSS pixels; pageWidth (1280) converts them to the screen's. */
-  void play(int slot, String name, String url, float x, float y, float w, float h, float pageWidth) {
+  /**
+   * The rectangle is in the page's CSS pixels; pageWidth (1280) converts them to the screen's. fallback (or empty) is
+   * played instead when url fails, e.g. a camera's HD stream above what the frame decodes, for its sub-stream.
+   */
+  void play(int slot, String name, String url, String fallback, float x, float y, float w, float h, float pageWidth) {
     if (slot < 0 || slot >= SLOTS) return;
     Slot s = slots[slot];
     float k = web.getWidth() / (pageWidth > 0 ? pageWidth : 1280f);
@@ -52,6 +55,8 @@ final class CameraWall {
     s.name = name;
     if (url.equals(s.url) && s.video != null) return; // same camera, new place: keep the stream
     s.url = url;
+    s.fallback = fallback == null || fallback.isEmpty() || fallback.equals(url) ? null : fallback;
+    s.src = url;
     if (!paused) s.start();
   }
 
@@ -68,7 +73,7 @@ final class CameraWall {
 
   void resume() {
     paused = false;
-    for (Slot s : slots) if (s.url != null) s.start();
+    for (Slot s : slots) if (s.url != null) { s.src = s.url; s.start(); }
   }
 
   private final class Slot {
@@ -76,7 +81,8 @@ final class CameraWall {
     final FrameLayout box;
     final TextView label;
     VideoView video;
-    String url, name = "";
+    String url, fallback, name = "";
+    String src;   // what plays: url, or fallback once url has failed
 
     final Runnable retry = new Runnable() {
       @Override
@@ -108,17 +114,25 @@ final class CameraWall {
           FrameLayout.LayoutParams.MATCH_PARENT, Gravity.CENTER));
       box.addView(label, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
           FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START));
-      video.setOnPreparedListener(mp -> label.setText(name));
+      video.setOnPreparedListener(mp -> label.setVisibility(View.GONE)); // the page's card shows the name
       video.setOnErrorListener((mp, what, extra) -> {
         Log.w(TAG, "Camera " + name + " stream error " + what + "/" + extra);
-        label.setText(name + " · flux indisponible, nouvel essai…");
+        if (fallback != null && !fallback.equals(src)) { // the HD stream cannot play here: its sub-stream at once
+          src = fallback;
+          dropVideo();
+          handler.post(retry);
+          return true;
+        }
+        label.setText("Flux indisponible, nouvel essai…");
+        label.setVisibility(View.VISIBLE);
         dropVideo();
         handler.postDelayed(retry, RETRY_MS);
         return true; // no system "Can't play this video" dialog
       });
       video.setOnCompletionListener(mp -> handler.postDelayed(retry, RETRY_MS));
-      label.setText(name + " · connexion…");
-      video.setVideoURI(Uri.parse(url));
+      label.setText("Connexion…");
+      label.setVisibility(View.VISIBLE);
+      video.setVideoURI(Uri.parse(src));
       video.start();
     }
 

@@ -85,13 +85,16 @@
   .rail-btn.on { background: var(--secondary-container); color: var(--on-secondary-container); }
   .view { position: absolute; left: 108px; top: 0; right: 0; bottom: 0; }
   /* cameras: the kiosk app lays a video player over each tile; full screen covers the rail too */
-  #cam-grid { position: absolute; left: 0; top: 24px; right: 24px; bottom: 24px; display: grid; gap: 12px;
-    grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-  #cam-grid.n1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
-  #cam-grid.n2 { grid-template-rows: 1fr; }
-  .cam-tile { background: #000; border-radius: 24px; position: relative; min-height: 0; }
-  .cam-tile span { position: absolute; left: 18px; bottom: 12px; color: #ccc; font-size: 18px; }
-  #cam-msg { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: #fff; font-size: 20px; }
+  #cam-grid { position: absolute; left: 0; top: 104px; right: 24px; bottom: 24px; display: grid; gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+  #cam-grid.n1 { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  #cam-grid.n2 { grid-template-rows: minmax(0, 1fr); }
+  .cam-card { display: flex; flex-direction: column; gap: 12px; padding: 16px 18px 18px; border-radius: 32px;
+    background: var(--surface-container-low); min-height: 0; }
+  .cam-card .cs-ic { width: 44px; height: 44px; border-radius: 22px; }
+  .cam-card .clim-name { font-size: 22px; }
+  .cam-vid { flex: 1; min-height: 0; border-radius: 20px; background: #000; position: relative; overflow: hidden; }
+  .cam-vid span { position: absolute; left: 0; right: 0; top: 44%; text-align: center; color: #ccc; font-size: 16px; }
   #view-cameras.full { left: 0; z-index: 3; background: #000; }
   /* solar: up to four cards, two per row; hidden cards leave the space to the others */
   #so-wrap { position: absolute; left: 0; top: 24px; right: 24px; bottom: 24px; display: grid; grid-template-columns: 1fr 1fr;
@@ -569,7 +572,8 @@
   .range.ct::-webkit-slider-thumb { background: var(--ct-thumb); }
   .range:disabled::-webkit-slider-runnable-track { background: var(--surface-container-highest); }
   .range:disabled::-webkit-slider-thumb { background: var(--outline); }
-  .sheet-foot { display: flex; justify-content: flex-end; margin-top: 24px; }
+  .sheet-foot { display: flex; justify-content: flex-end; align-items: center; margin-top: 24px; }
+  .sheet-foot .outlined { height: 48px; border-radius: 24px; } /* same height as the tonal button beside it */
   #set-night-times { display: flex; gap: 12px; }
   #set-night-times.off { opacity: 0.4; pointer-events: none; }
   .nt { flex: 1; display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 6px 0 18px; border-radius: 28px;
@@ -828,6 +832,7 @@
   </div>
 
   <div id="view-cameras" class="view" style="display:none">
+    <div class="pill-head"><div class="pill"><span class="big-title">Caméras</span><span id="cam-sub" class="sub"></span></div></div>
     <div id="cam-grid"></div>
   </div>
 

@@ -772,5 +772,6 @@ test('weatherDetails prefers a gust sensor over the dew point', () => {
 test('cameraList keeps rtsp:// cameras and names the unnamed ones', () => {
   assert.deepEqual(app.cameraList({}), []);
   assert.deepEqual(app.cameraList({ cameras: [{ name: 'Entrée', url: 'rtsp://u:p@192.168.0.50:554/sub' }, { url: 'http://x/mjpeg' }, { url: 'rtsp://c2' }] }),
-    [{ name: 'Entrée', url: 'rtsp://u:p@192.168.0.50:554/sub' }, { name: 'Caméra 2', url: 'rtsp://c2' }]);
+    [{ name: 'Entrée', url: 'rtsp://u:p@192.168.0.50:554/sub', full: 'rtsp://u:p@192.168.0.50:554/sub' }, { name: 'Caméra 2', url: 'rtsp://c2', full: 'rtsp://c2' }]);
+  assert.equal(app.cameraList({ cameras: [{ url: 'rtsp://h/stream2', full: 'rtsp://h/stream1' }] })[0].full, 'rtsp://h/stream1');
 });

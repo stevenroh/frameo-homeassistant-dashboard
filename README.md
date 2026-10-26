@@ -62,7 +62,8 @@ Copy `secrets/config.example.json` to `secrets/config.json` (gitignored) and fil
   LAN install give the scheme and port, e.g. `http://192.168.1.10:8123`. Prefer a non-admin user's token: it is
   readable by anyone with ADB on the frame.
 - `cameras`: `[{ "name", "url" }]` RTSP cameras (`rtsp://user:pass@ip:554/…`) for the Caméras tab, up to four in a 2x2
-  grid; a tap shows one full screen, another tap goes back. The kiosk app plays them with Android's own player (a page
+  grid; a tap shows one full screen, another tap goes back. Optional `"full"`: another stream for full screen (the HD
+  `stream1` while the grid uses `stream2`); when the frame cannot play it, the grid's stream plays instead. The kiosk app plays them with Android's own player (a page
   cannot play RTSP), so they only show on the frame. Use the cameras' H.264 sub-stream (e.g. Tapo `stream2`): four HD
   streams are too much for the frame.
 - `gusts` (optional): a gust sensor, e.g. MeteoSwiss's `sensor.wind_gusts_peak_1s_at_…`, for the Rafales tile.
