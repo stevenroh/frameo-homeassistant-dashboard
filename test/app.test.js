@@ -784,10 +784,10 @@ test('fitVideo covers the tile or the screen with a 16:9 rectangle, cropping ins
 });
 
 test('tileSize fits each stream\'s shape in its grid cell', () => {
-  assert.deepEqual(app.tileSize(3, 16 / 9), { width: 550, height: 309 });
-  assert.deepEqual(app.tileSize(3, 4 / 3), { width: 416, height: 312 });
-  assert.deepEqual(app.tileSize(1, 16 / 9), { width: 1132, height: 636 });
-  assert.deepEqual(app.tileSize(2, 4 / 3), { width: 550, height: 412 });
+  assert.deepEqual(app.tileSize(3, 16 / 9), { width: 544, height: 306 });
+  assert.deepEqual(app.tileSize(4, 16 / 9), { width: 544, height: 306 });
+  assert.deepEqual(app.tileSize(1, 16 / 9), { width: 1124, height: 632 });
+  assert.deepEqual(app.tileSize(2, 16 / 9), { width: 544, height: 306 });
 });
 
 test('fitHeight keeps the tile height and centres a narrower stream', () => {

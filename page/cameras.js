@@ -21,12 +21,13 @@ function fitVideo(r, ratio) {
 }
 
 // Size of a camera tile's video area: the largest 16:9 (or ratio) box that fits its grid cell. The grid is 1148 x 672
-// (under the title), 16 px gaps, two columns (one for a single camera), and 8 px of card around the video.
+// (under the title), 12 px gaps, two columns (one for a single camera), and a 12 px card border around the video.
+var CAM_GAP = 12, CAM_BORDER = 12;
 function tileSize(n, ratio) {
   var cols = n > 1 ? 2 : 1;
   var rows = Math.ceil(n / cols);
-  var cellW = (1148 - 16 * (cols - 1)) / cols - 16;
-  var cellH = (672 - 16 * (rows - 1)) / rows - 16;
+  var cellW = (1148 - CAM_GAP * (cols - 1)) / cols - 2 * CAM_BORDER;
+  var cellH = (672 - CAM_GAP * (rows - 1)) / rows - 2 * CAM_BORDER;
   var w = Math.min(cellW, cellH * ratio);
   return { width: Math.floor(w), height: Math.floor(w / ratio) };
 }
