@@ -56,8 +56,6 @@ function settingsSheet(ctx) {
         saveNight();
       };
     } else $('set-night-box').style.display = 'none';
-    if (kiosk.shutdown) $('set-power').onclick = function () { closeSettings(); kiosk.shutdown(); }; // the app asks to confirm
-    else $('set-power').style.display = 'none';
   }
 
   return kiosk ? { closeSheet: closeSettings } : {};

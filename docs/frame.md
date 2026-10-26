@@ -67,6 +67,10 @@ adb shell am start -n com.wesbos.homehq/.MainActivity --ei sleep_minutes 0    # 
 
 Settings' **Éteindre l'écran** puts it to sleep right away.
 
+There is no power-off: the frame has no battery and powers itself back on whenever it is plugged in. `reboot -p`,
+Android's own shutdown (`ACTION_REQUEST_SHUTDOWN`) and Frameo's own Éteindre all came back as a restart, so the
+Settings sheet offers Éteindre l'écran and the night schedule instead. Unplugging is the only real off.
+
 **Night schedule**, like Frameo's: Settings, **Veille la nuit**, then the off and on times (30-minute steps). The screen
 goes dark at the off time and lights up again at the on time; a touch at night lights it for one minute. The kiosk
 app keeps the schedule, so it survives updates and restarts. Over ADB:

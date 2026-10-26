@@ -80,7 +80,6 @@ public class MainActivity extends Activity {
   static final int DEFAULT_SLEEP_MINUTES = 5;
   // The app theme is the old fullscreen one, whose dialogs look pre-Material; dialogs ask for Material explicitly.
   static final int DIALOG = android.R.style.Theme_Material_Light_Dialog_Alert;
-  static final String SHUTDOWN = "am start -a android.intent.action.ACTION_REQUEST_SHUTDOWN --ez android.intent.extra.KEY_CONFIRM false";
 
   private WebView web;
   private CameraWall camera;
@@ -377,8 +376,6 @@ public class MainActivity extends Activity {
       if (own()) runOnUiThread(() -> { handler.removeCallbacks(goDark); goDark.run(); });
     }
 
-    /** Settings' Éteindre le cadre: asks, then shuts the frame down. */
-    @JavascriptInterface public void shutdown() { if (own()) runOnUiThread(MainActivity.this::confirmShutdown); }
   }
 
   private String savedUrl() {
@@ -710,28 +707,6 @@ public class MainActivity extends Activity {
         Log.w(TAG, "Backlight write failed: " + ex);
       }
     });
-  }
-
-  /**
-   * A full shutdown through Android's own ShutdownThread, the one the power menu's Éteindre runs (apps and storage
-   * closed cleanly), started with ACTION_REQUEST_SHUTDOWN through su. `reboot -p` restarted this frame instead.
-   */
-  private void confirmShutdown() {
-    new AlertDialog.Builder(this, DIALOG)
-        .setTitle("Éteindre le cadre ?")
-        .setMessage("Pour le rallumer, appuyez sur le bouton marche/arrêt du cadre.")
-        .setPositiveButton("Éteindre", (d, w) -> ROOT.execute(() -> {
-          try {
-            Runtime.getRuntime().exec(new String[] {"su", "-c", SHUTDOWN}).waitFor();
-          } catch (Exception ex) {
-            Log.w(TAG, "Shutdown failed: " + ex);
-          }
-          // Still running a while later: su refused or the system ignored the request.
-          handler.postDelayed(() -> toast("Impossible d’éteindre le cadre"), 15000);
-        }))
-        .setNegativeButton("Annuler", null)
-        .setOnDismissListener(d -> scheduleSleep())
-        .show();
   }
 
   /** One finger held still on the empty bottom of the rail for HOLD_MS opens the controls. */
