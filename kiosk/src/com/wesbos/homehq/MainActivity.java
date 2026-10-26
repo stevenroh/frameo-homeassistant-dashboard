@@ -83,6 +83,7 @@ public class MainActivity extends Activity {
   static final String SHUTDOWN = "am start -a android.intent.action.ACTION_REQUEST_SHUTDOWN --ez android.intent.extra.KEY_CONFIRM false";
 
   private WebView web;
+  private CameraWall camera;
   private final Handler handler = new Handler(Looper.getMainLooper());
   private final int[] exitIds = new int[2];
   private final float[] exitX = new float[2];
@@ -192,6 +193,7 @@ public class MainActivity extends Activity {
     });
     FrameLayout root = new FrameLayout(this);
     root.addView(web);
+    camera = new CameraWall(root, web, handler, 1); // over the page, under the offline screen and the sleep cover
     root.addView(buildOffline());
     cover = new View(this);
     cover.setBackgroundColor(Color.BLACK);
@@ -213,6 +215,7 @@ public class MainActivity extends Activity {
     super.onResume();
     NavigationService.setDashboardVisible(true);
     wake();
+    camera.resume();
     wasNight = false;
     handler.removeCallbacks(nightTick);
     handler.post(nightTick); // already night: dark straight away
@@ -225,6 +228,7 @@ public class MainActivity extends Activity {
     // wake() re-arms the timer; nothing may darken the screen while another app is in front.
     handler.removeCallbacks(goDark);
     handler.removeCallbacks(nightTick);
+    camera.pause();
     NavigationService.setDashboardVisible(false);
     super.onPause();
   }
@@ -353,6 +357,16 @@ public class MainActivity extends Activity {
       final boolean valid = NightSchedule.minutes(off) >= 0 && NightSchedule.minutes(on) >= 0;
       runOnUiThread(() -> setNight(valid ? off : "", valid ? on : ""));
     }
+
+    /** Caméras tab: play an RTSP stream in slot 0-3 over the page's rectangle (CSS px of a pageWidth-wide page). */
+    @JavascriptInterface public void playRtsp(int slot, String name, String url, float x, float y, float w, float h,
+        float pageWidth) {
+      if (!own() || url == null || !url.startsWith("rtsp://")) return;
+      runOnUiThread(() -> camera.play(slot, name == null ? "" : name, url, x, y, w, h, pageWidth));
+    }
+
+    /** One slot, or every one with -1. */
+    @JavascriptInterface public void stopVideo(int slot) { if (own()) runOnUiThread(() -> camera.stop(slot)); }
 
     /** Settings' Éteindre l'écran: the screen sleep, now; a touch wakes it. */
     @JavascriptInterface public void screenOff() {
@@ -559,6 +573,7 @@ public class MainActivity extends Activity {
     public void run() {
       if (dark) return;
       dark = true;
+      camera.pause();
       cover.setVisibility(View.VISIBLE);
       savedLevel = readBacklight();
       if (backlight != null) {
@@ -577,6 +592,7 @@ public class MainActivity extends Activity {
     if (dark) {
       dark = false;
       cover.setVisibility(View.GONE);
+      camera.resume();
       if (backlight != null) {
         rootWrite(backlight + "/brightness", savedLevel != null && !"0".equals(savedLevel) ? savedLevel : "204");
       } else {

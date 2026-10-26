@@ -18,6 +18,7 @@ function settingsSheet(ctx) {
   function saveNight() { kiosk.setNightSchedule(night.on ? night.off : '', night.on ? night.wake : ''); renderNight(); }
 
   function openSettings() {
+    ctx.each('pauseVideo'); // the camera video is drawn above the page and would cover the sheet
     $('set-ver').textContent = 'Version du tableau de bord : ' + kiosk.version();
     $('set-url').value = kiosk.updateUrl();
     if (kiosk.nightSchedule) {
@@ -29,6 +30,7 @@ function settingsSheet(ctx) {
     $('set-sheet').style.display = '';
   }
   function closeSettings() {
+    if ($('set-sheet').style.display !== 'none') ctx.each('resumeVideo'); // only when it really was open
     $('set-url').blur();
     $('scrim').style.display = 'none';
     $('set-sheet').style.display = 'none';

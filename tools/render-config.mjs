@@ -10,7 +10,7 @@ export function renderConfig(cfg) {
     climate: cfg.climate || [], lights: cfg.lights || [], todo: cfg.todo || '',
     ev: cfg.ev || null, music: cfg.music || null, recipes: cfg.recipes || null,
     background: cfg.background || null,
-    photos: cfg.photos || null, solar: cfg.solar || null, temperatures: cfg.temperatures || null, gusts: cfg.gusts || null, photoSeconds: cfg.photoSeconds || null };
+    photos: cfg.photos || null, solar: cfg.solar || null, temperatures: cfg.temperatures || null, gusts: cfg.gusts || null, cameras: cfg.cameras || null, photoSeconds: cfg.photoSeconds || null };
   return `window.CONFIG = ${JSON.stringify(out)};\n`;
 }
 

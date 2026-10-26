@@ -89,9 +89,9 @@ function start(cfg) {
   }
 
   var VIEWS = { home: 'view-home', forecast: 'view-forecast', calendar: 'view-cal', climate: 'view-climate', lights: 'view-lights',
-    music: 'view-music', ev: 'view-ev', recipes: 'view-recipes', photos: 'view-photos', solar: 'view-solar' };
+    music: 'view-music', ev: 'view-ev', recipes: 'view-recipes', photos: 'view-photos', solar: 'view-solar', cameras: 'view-cameras' };
   var NAV = { home: 'nav-home', forecast: 'nav-forecast', calendar: 'nav-cal', climate: 'nav-climate', lights: 'nav-lights',
-    music: 'nav-music', ev: 'nav-ev', recipes: 'nav-recipes', photos: 'nav-photos', solar: 'nav-solar' };
+    music: 'nav-music', ev: 'nav-ev', recipes: 'nav-recipes', photos: 'nav-photos', solar: 'nav-solar', cameras: 'nav-cameras' };
 
   function each(hook, a, b) {
     tabs.forEach(function (t) { if (t[hook]) t[hook](a, b); });
@@ -112,9 +112,10 @@ function start(cfg) {
   var ctx = {
     cfg: cfg, store: store, $: $, shown: shown, setText: setText, setHTML: setHTML, esc: esc, isWaste: isWaste,
     timeOf: timeOf, toast: toast, sendAll: sendAll, showView: showView, view: function () { return view; },
+    each: function (hook) { each(hook); },
   };
   var tabs = [homeTab(ctx), todoCard(ctx), forecastTab(ctx), calendarTab(ctx), climateTab(ctx), lightsTab(ctx),
-    musicTab(ctx), evTab(ctx), recipesTab(ctx), photosTab(ctx), solarTab(ctx), settingsSheet(ctx)];
+    musicTab(ctx), evTab(ctx), recipesTab(ctx), photosTab(ctx), solarTab(ctx), camerasTab(ctx), settingsSheet(ctx)];
 
   $('scrim').onclick = function () { each('closeSheet'); };
   document.addEventListener('touchstart', function () { lastTouch = Date.now(); }, { passive: true });
@@ -201,8 +202,8 @@ if (typeof module !== 'undefined') {
     conditionIcon: conditionIcon, weatherIcon: weatherIcon, wasteType: wasteType, cleanTitle: cleanTitle,
     binColor: binColor, binFill: binFill, applyEntityDiff: applyEntityDiff, parseForecast: parseForecast,
     parseEvents: parseEvents, groupByDay: groupByDay, todayEvents: todayEvents, parseTodos: parseTodos,
-    todoDue: todoDue, todoLists: todoLists, reminderOptions: reminderOptions, nextTarget: nextTarget, climateView: climateView, roomIcon: roomIcon,
-    lightView: lightView, domainOf: domainOf, colorTempView: colorTempView, colorView: colorView, serviceCall: serviceCall, haBase: haBase, photoUrls: photoUrls, isPortrait: isPortrait, slide: slide, shuffled: shuffled, haSocketUrl: haSocketUrl, eventsOnDay: eventsOnDay, chipOrder: chipOrder, monthGrid: monthGrid,
+    todoDue: todoDue, todoLists: todoLists, reminderOptions: reminderOptions, todoTakesDueTime: todoTakesDueTime, nextTarget: nextTarget, climateView: climateView, roomIcon: roomIcon,
+    lightView: lightView, domainOf: domainOf, colorTempView: colorTempView, colorView: colorView, serviceCall: serviceCall, haBase: haBase, photoUrls: photoUrls, isPortrait: isPortrait, cameraList: cameraList, slide: slide, shuffled: shuffled, haSocketUrl: haSocketUrl, eventsOnDay: eventsOnDay, chipOrder: chipOrder, monthGrid: monthGrid,
     weekDays: weekDays, localIso: localIso, msToNextMinute: msToNextMinute, backoffDelay: backoffDelay,
     staleLabel: staleLabel, newKeepAlive: newKeepAlive, keepAliveTick: keepAliveTick,
     keepAlivePong: keepAlivePong, initialState: initialState, handleMessage: handleMessage, refresh: refresh,

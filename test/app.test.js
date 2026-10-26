@@ -382,6 +382,13 @@ test('todoDue words the due time and flags overdue', () => {
   assert.deepEqual(app.todoDue(todos[3], now), { text: '', overdue: false });
 });
 
+test('todoTakesDueTime follows the list\'s supported features', () => {
+  assert.equal(app.todoTakesDueTime({ s: '0', a: { supported_features: 15 } }), false); // Shopping list
+  assert.equal(app.todoTakesDueTime({ s: '0', a: { supported_features: 127 } }), true); // Local to-do
+  assert.equal(app.todoTakesDueTime({ s: '0', a: {} }), false);
+  assert.equal(app.todoTakesDueTime(undefined), false);
+});
+
 test('reminderOptions offers presets that are still in the future', () => {
   const noon = app.reminderOptions(new Date(2026, 9, 14, 12, 0));
   assert.deepEqual(noon.map(o => o.id), ['none', 'hour', 'evening', 'morning']);
@@ -760,4 +767,10 @@ test('weatherDetails prefers a gust sensor over the dew point', () => {
   const t = app.weatherDetails(ms, null, { s: '22.7', a: {} });
   assert.deepEqual([t[2].label, t[2].value], ['Rafales', '23']);
   assert.equal(app.weatherDetails(ms, null, { s: 'unavailable', a: {} })[2].label, 'Point de rosée');
+});
+
+test('cameraList keeps rtsp:// cameras and names the unnamed ones', () => {
+  assert.deepEqual(app.cameraList({}), []);
+  assert.deepEqual(app.cameraList({ cameras: [{ name: 'Entrée', url: 'rtsp://u:p@192.168.0.50:554/sub' }, { url: 'http://x/mjpeg' }, { url: 'rtsp://c2' }] }),
+    [{ name: 'Entrée', url: 'rtsp://u:p@192.168.0.50:554/sub' }, { name: 'Caméra 2', url: 'rtsp://c2' }]);
 });

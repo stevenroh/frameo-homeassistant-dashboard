@@ -39,6 +39,7 @@ Flat colours, no shadows, ripples or animations, because the frame is a 1 GHz Co
 | Recipes | Search the Garfinho recipe library by name or ingredient, filter chips, favourites with a heart, and a recipe page with photo, tags and tickable ingredients |
 | Solar | Production, house, battery (charge %, charging or discharging) and grid (bought and sold today) from the inverter's sensors |
 | EV | Charger state and power, session/day/month kWh, price bars with your cap, charge mode, switches |
+| Caméras | Up to four RTSP cameras in a 2x2 grid, tap one for full screen |
 | Photos | Full screen photos from the Frameo app's folder (sent with the Frameo phone app), shuffled, one a minute; two portraits share the screen; tap left/right for previous/next, the middle for Home |
 | Settings (gear) | Dashboard version, update address, Update now, Use built-in |
 
@@ -60,6 +61,10 @@ Copy `secrets/config.example.json` to `secrets/config.json` (gitignored) and fil
 - `host`, `token`: your HA address and a long-lived token. A bare host (`xxx.ui.nabu.casa`) means https/wss; for a
   LAN install give the scheme and port, e.g. `http://192.168.1.10:8123`. Prefer a non-admin user's token: it is
   readable by anyone with ADB on the frame.
+- `cameras`: `[{ "name", "url" }]` RTSP cameras (`rtsp://user:pass@ip:554/…`) for the Caméras tab, up to four in a 2x2
+  grid; a tap shows one full screen, another tap goes back. The kiosk app plays them with Android's own player (a page
+  cannot play RTSP), so they only show on the frame. Use the cameras' H.264 sub-stream (e.g. Tapo `stream2`): four HD
+  streams are too much for the frame.
 - `gusts` (optional): a gust sensor, e.g. MeteoSwiss's `sensor.wind_gusts_peak_1s_at_…`, for the Rafales tile.
 - `weather`, `waste`, `calendars`: entity ids. `waste` (optional) is a calendar of bin collections (shown as chips).
 - `temperatures`: `[{ "id", "name", "humidity" }]` temperature sensors (humidity optional), shown as chips under the date

@@ -54,6 +54,11 @@ function reminderOptions(now) {
   return opts;
 }
 
+// HA's TodoListEntityFeature.SET_DUE_DATETIME_ON_ITEM; lists without it (Shopping list) reject an
+// add_item that carries a due time, so the item never lands.
+function todoTakesDueTime(entity) {
+  return !!entity && ((entity.a.supported_features || 0) & 32) !== 0;
+}
 
 function todoCard(ctx) {
   var cfg = ctx.cfg;
@@ -112,6 +117,7 @@ function todoCard(ctx) {
     newDue = null;
     $('todo-input').value = '';
     setText('todo-sheet-name', lists.length > 1 ? 'Nouvelle tâche · ' + listName(lists.filter(function (l) { return l.id === current; })[0]) : 'Nouvelle tâche');
+    $('todo-when').style.display = todoTakesDueTime(ctx.store[current]) ? '' : 'none';
     renderReminderChoices();
     $('scrim').style.display = '';
     $('todo-sheet').style.display = '';
@@ -128,9 +134,9 @@ function todoCard(ctx) {
     var text = $('todo-input').value.replace(/\s+/g, ' ').trim();
     if (!text || !state) return;
     var data = { item: text };
-    if (newDue) data.due_datetime = localIso(newDue);
+    if (newDue && todoTakesDueTime(ctx.store[current])) data.due_datetime = localIso(newDue);
     sendAll(serviceCall(state, 'todo', 'add_item', current, data).send);
-    todos = byList[current] = todos.concat([{ uid: 'new-' + Date.now(), summary: text, due: newDue, dueHasTime: !!newDue, n: todos.length }]);
+    todos = byList[current] = todos.concat([{ uid: 'new-' + Date.now(), summary: text, due: data.due_datetime ? newDue : null, dueHasTime: !!data.due_datetime, n: todos.length }]);
     renderTodos();
     closeTodoSheet();
     setTimeout(refetchTodos, 800);
