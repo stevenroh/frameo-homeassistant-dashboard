@@ -137,6 +137,8 @@ function musicTab(ctx) {
   try { recent = JSON.parse(localStorage.getItem('recent') || '[]'); } catch (x) { recent = []; }
   var PLAY = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg>';
   var PAUSE = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2"></rect><rect x="14" y="5" width="4" height="14" rx="1.2"></rect></svg>';
+  var RADIO = '<svg class="ph" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="12" rx="2.5"></rect><path d="M7 8l10-4.5"></path><circle cx="15.5" cy="14" r="2.5"></circle><path d="M6.5 12.5h4M6.5 15.5h4"></path></svg>';
+  var NOTE_S = '<svg class="ph" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="17" cy="16" r="3"></circle></svg>';
   var NOTE = '<svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="17" cy="16" r="3"></circle></svg>';
 
   var pickedAt = 0;
@@ -169,7 +171,9 @@ function musicTab(ctx) {
     }).join(''));
     var items = shelves[shelf];
     setHTML('mu-lib', items ? items.map(function (t, i) {
+      // A pictogram under the cover: it shows when there is no cover or it fails to load (dead station logos).
       return '<button class="tile" data-i="' + i + '"><span class="tile-art' + (t.type === 'artist' ? ' round' : '') + '">' +
+        (t.type === 'radio' ? RADIO : NOTE_S) +
         (t.thumb ? '<img src="' + esc(t.thumb) + '" alt="" onerror="this.style.display=\'none\'">' : '') + '</span><span class="tile-t">' + esc(t.title) + '</span></button>';
     }).join('') || '<div class="rc-empty-s">Rien ici</div>' :
       '<div class="rc-empty-s">' + (items === null ? (ma ? 'Impossible de charger Music Assistant' : 'Impossible de charger Spotify') : 'Chargement…') + '</div>');
