@@ -15,6 +15,19 @@ function nextTarget(a, dir) {
 var ACTIONS = { heating: 'Chauffe', idle: 'Au repos', off: 'Arrêt', cooling: 'Refroidit', drying: 'Déshumidifie', fan: 'Ventilation' };
 var MODES = { off: 'Arrêt', auto: 'Auto', heat: 'Chauffage' };
 
+// cfg.temperatures [{ id, name, humidity? }] + entity store -> "21.3°" for the Climate cards; an
+// unavailable sensor shows "—", humidity is '' when not configured.
+function roomTemps(store, rooms) {
+  function val(id) { var e = id && store[id]; var v = e && parseFloat(e.s); return e && isFinite(v) ? v : null; }
+  return (rooms || []).map(function (r) {
+    var e = store[r.id];
+    var t = val(r.id);
+    var h = val(r.humidity);
+    return { name: r.name || (e && e.a.friendly_name) || r.id, text: t == null ? '—' : t.toFixed(1) + '°',
+      hum: r.humidity ? (h == null ? '—' : Math.round(h) + ' %') : '' };
+  });
+}
+
 // Room pictograms for the sensor and light cards, picked from the room's name (French or English) unless cfg sets "icon".
 var ROOM_ICONS = {
   sofa: '<path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"></path><path d="M3 13a2 2 0 0 1 4 0v1h10v-1a2 2 0 0 1 4 0v4H3z"></path><path d="M5 17v2M19 17v2"></path>',

@@ -68,8 +68,8 @@ Copy `secrets/config.example.json` to `secrets/config.json` (gitignored) and fil
   streams are too much for the frame.
 - `gusts` (optional): a gust sensor, e.g. MeteoSwiss's `sensor.wind_gusts_peak_1s_at_…`, for the Rafales tile.
 - `weather`, `waste`, `calendars`: entity ids. `waste` (optional) is a calendar of bin collections (shown as chips).
-- `temperatures`: `[{ "id", "name", "humidity" }]` temperature sensors (humidity optional), shown as chips under the date
-  on Home and as cards on the Climate tab after any thermostats. The card's pictogram follows the room's name (salon,
+- `temperatures`: `[{ "id", "name", "humidity" }]` temperature sensors (humidity optional), shown as cards on the
+  Climate tab after any thermostats. The card's pictogram follows the room's name (salon,
   chambre, cuisine, bureau, bain, enfant, garage, jardin…); `"icon"` forces one of `sofa`, `bed`, `kitchen`, `desk`,
   `bath`, `kid`, `garage`, `pool`, `outdoor`, `thermo`. Light rooms get the same pictograms.
 - `todo`: a `todo.*` entity, or a list of them (ids, or `{ "id", "name" }` to rename one); several lists show as tabs on

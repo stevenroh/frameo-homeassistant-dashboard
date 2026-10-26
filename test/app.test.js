@@ -775,3 +775,22 @@ test('cameraList keeps rtsp:// cameras and names the unnamed ones', () => {
     [{ name: 'Entrée', url: 'rtsp://u:p@192.168.0.50:554/sub', full: 'rtsp://u:p@192.168.0.50:554/sub' }, { name: 'Caméra 2', url: 'rtsp://c2', full: 'rtsp://c2' }]);
   assert.equal(app.cameraList({ cameras: [{ url: 'rtsp://h/stream2', full: 'rtsp://h/stream1' }] })[0].full, 'rtsp://h/stream1');
 });
+
+test('fitVideo covers the tile or the screen with a 16:9 rectangle, cropping instead of black bars', () => {
+  assert.deepEqual(app.fitVideo({ left: 0, top: 0, width: 1280, height: 800 }), { left: -71.11111111111109, top: 0, width: 1422.2222222222222, height: 800 });
+  assert.deepEqual(app.fitVideo({ left: 10, top: 20, width: 160, height: 90 }), { left: 10, top: 20, width: 160, height: 90 });
+  const wide = app.fitVideo({ left: 0, top: 0, width: 800, height: 225 });
+  assert.deepEqual([wide.width, wide.height, wide.top], [800, 450, -112.5]);
+});
+
+test('tileSize fits each stream\'s shape in its grid cell', () => {
+  assert.deepEqual(app.tileSize(3, 16 / 9), { width: 550, height: 309 });
+  assert.deepEqual(app.tileSize(3, 4 / 3), { width: 416, height: 312 });
+  assert.deepEqual(app.tileSize(1, 16 / 9), { width: 1132, height: 636 });
+  assert.deepEqual(app.tileSize(2, 4 / 3), { width: 550, height: 412 });
+});
+
+test('fitHeight keeps the tile height and centres a narrower stream', () => {
+  assert.deepEqual(app.fitHeight({ left: 100, top: 50, width: 550, height: 309 }, 4 / 3), { left: 169, top: 50, width: 412, height: 309 });
+  assert.deepEqual(app.fitHeight({ left: 100, top: 50, width: 560, height: 315 }, 16 / 9), { left: 100, top: 50, width: 560, height: 315 });
+});

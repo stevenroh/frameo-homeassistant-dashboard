@@ -86,16 +86,14 @@
   .view { position: absolute; left: 108px; top: 0; right: 0; bottom: 0; }
   /* cameras: the kiosk app lays a video player over each tile; full screen covers the rail too */
   #cam-grid { position: absolute; left: 0; top: 104px; right: 24px; bottom: 24px; display: grid; gap: 16px;
-    grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
-  #cam-grid.n1 { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-  #cam-grid.n2 { grid-template-rows: minmax(0, 1fr); }
-  .cam-card { display: flex; flex-direction: column; gap: 12px; padding: 16px 18px 18px; border-radius: 32px;
-    background: var(--surface-container-low); min-height: 0; }
-  .cam-card .cs-ic { width: 44px; height: 44px; border-radius: 22px; }
-  .cam-card .clim-name { font-size: 22px; }
-  .cam-vid { flex: 1; min-height: 0; border-radius: 20px; background: #000; position: relative; overflow: hidden; }
-  .cam-vid span { position: absolute; left: 0; right: 0; top: 44%; text-align: center; color: #ccc; font-size: 16px; }
+    grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); justify-items: center; align-items: start; }
+  #cam-grid.n1 { grid-template-columns: minmax(0, 1fr); }
+  /* each tile takes its stream's shape (cameras.js sizes the video), so the video fills it without black bars */
+  .cam-card { padding: 8px; border-radius: 28px; background: var(--surface-container-low); }
+  .cam-vid { width: 550px; height: 309px; border-radius: 20px; background: #000; position: relative; overflow: hidden; }
+  .cam-vid span { position: absolute; left: 16px; bottom: 10px; color: #ccc; font-size: 18px; }
   #view-cameras.full { left: 0; z-index: 3; background: #000; }
+  #view-cameras.full .pill-head, #view-cameras.full #cam-grid { visibility: hidden; } /* only the video, on black */
   /* solar: up to four cards, two per row; hidden cards leave the space to the others */
   #so-wrap { position: absolute; left: 0; top: 24px; right: 24px; bottom: 24px; display: grid; grid-template-columns: 1fr 1fr;
     grid-auto-rows: minmax(0, 1fr); gap: 16px; }
@@ -130,11 +128,6 @@
   #clockcard { position: absolute; left: 0; top: 24px; padding: 16px 28px 18px; border-radius: 32px; background: var(--surface-container-low); }
   #clock { font-size: 112px; line-height: 0.95; font-weight: 300; letter-spacing: -4px; color: var(--primary); }
   #datebar { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
-  #rooms { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  .room-t { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px 0 10px; border-radius: 18px;
-    background: var(--peach); font-size: 16px; color: var(--on-surface); }
-  .room-t svg { color: var(--primary); }
-  .room-t b { font-weight: 600; }
   #date { font-size: 18px; }
   #wchip { height: 40px; padding: 0 10px 0 10px; border-radius: 20px; background: var(--sky); color: var(--on-sky);
     display: inline-flex; align-items: center; gap: 6px; font-size: 16px; }
@@ -658,7 +651,6 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
         </button>
       </div>
-      <div id="rooms"></div>
     </section>
     <section id="right" aria-label="Aujourd’hui">
       <div id="right-head">

@@ -203,7 +203,7 @@ if (typeof module !== 'undefined') {
     binColor: binColor, binFill: binFill, applyEntityDiff: applyEntityDiff, parseForecast: parseForecast,
     parseEvents: parseEvents, groupByDay: groupByDay, todayEvents: todayEvents, parseTodos: parseTodos,
     todoDue: todoDue, todoLists: todoLists, reminderOptions: reminderOptions, todoTakesDueTime: todoTakesDueTime, nextTarget: nextTarget, climateView: climateView, roomIcon: roomIcon,
-    lightView: lightView, domainOf: domainOf, colorTempView: colorTempView, colorView: colorView, serviceCall: serviceCall, haBase: haBase, photoUrls: photoUrls, isPortrait: isPortrait, cameraList: cameraList, slide: slide, shuffled: shuffled, haSocketUrl: haSocketUrl, eventsOnDay: eventsOnDay, chipOrder: chipOrder, monthGrid: monthGrid,
+    lightView: lightView, domainOf: domainOf, colorTempView: colorTempView, colorView: colorView, serviceCall: serviceCall, haBase: haBase, photoUrls: photoUrls, isPortrait: isPortrait, cameraList: cameraList, fitVideo: fitVideo, tileSize: tileSize, fitHeight: fitHeight, slide: slide, shuffled: shuffled, haSocketUrl: haSocketUrl, eventsOnDay: eventsOnDay, chipOrder: chipOrder, monthGrid: monthGrid,
     weekDays: weekDays, localIso: localIso, msToNextMinute: msToNextMinute, backoffDelay: backoffDelay,
     staleLabel: staleLabel, newKeepAlive: newKeepAlive, keepAliveTick: keepAliveTick,
     keepAlivePong: keepAlivePong, initialState: initialState, handleMessage: handleMessage, refresh: refresh,
